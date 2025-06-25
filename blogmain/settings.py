@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'blogs',
     'assignment',
     'crispy_forms',
+    'dashboards',
     'crispy_bootstrap4',
     'django.contrib.admin',
     'django.contrib.auth',
