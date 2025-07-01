@@ -24,15 +24,15 @@ from blogs import views as BlogsView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home' ),
-    path('category/', include('blogs.urls')),
-    path('blogs/<slug:slug>/', BlogsView.blogs, name='blogs'),
+    path('', include('blogs.urls')),
+    # Dashboards
+    path('dashboard/', include('dashboards.urls')),
+    path('<slug:category_slug>/<slug:slug>/', BlogsView.blogs, name='blogs'),
     # Search endpoint
     path('blogs.search/', BlogsView.search, name='search'),
     path('register/', views.register, name='register'),
     path('login/', views.login, name='login'),
     path('logout/', views.logout, name='logout'),
 
-    # Dashboards
-    path('ckeditor/', include('ckeditor_uploader.urls')),
-    path('dashboard/', include('dashboards.urls')),
+    path("ckeditor5/", include('django_ckeditor_5.urls')),
 ] +static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

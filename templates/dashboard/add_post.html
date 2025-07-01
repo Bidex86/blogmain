@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
-
+{% block header %}
+    {{ form.media }} <!-- Required for styling/js to make ckeditor5 work-->
+{% endblock %}
 {% block content %}
 {% load crispy_forms_tags %}
 
@@ -21,6 +23,16 @@
         </form>
         <br>
      </div>
+
+     <!-- CKEditor 5 from CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    <script>
+    ClassicEditor
+        .create(document.querySelector('#editor'))
+        .catch(error => {
+        console.error(error);
+        });
+    </script>
 
 
 {% endblock %}

@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from . forms import BlogPostForm, CategoryForm, AddUserForm, EditUserForm
 from django.template.defaultfilters import slugify
 from django.contrib.auth.models import User
+#from django.http import HttpResponse
 
 # Create your views here.
 @login_required(login_url='login')
@@ -18,12 +19,19 @@ def dashboard(request):
     return render(request, 'dashboard/dashboard.html', context)
 
 def categories(request):
-    return render(request, 'dashboard/categories.html')
+    #categories = Category.objects.all()
+
+    return render(request, 'dashboard/categories.html') #{'categories': categories})
 
 def add_category(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
         if form.is_valid():
+            category = form.save(commit=False) # temporarily saving the form
+            category.save()
+            category_name = form.cleaned_data['category_name']
+            category.slug = slugify(category_name) + ''+str()
+            category.save()
             form.save()
             return redirect('categories')
     form = CategoryForm()
@@ -37,6 +45,10 @@ def edit_category(request, pk):
     if request.method == 'POST':
         form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
+            category = form.save()
+            category_name = form.cleaned_data['category_name']
+            category.slug = slugify(category_name) + ''+str()
+            category.save()
             form.save()
             return redirect('categories')
     form = CategoryForm(instance=category)
@@ -66,7 +78,7 @@ def add_post(request):
             post.author = request.user
             post.save()
             title = form.cleaned_data['title']
-            post.slug = slugify(title) + '-'+str(post.id)
+            post.slug = slugify(title) + ''+str()
             post.save()
             return redirect('posts')
         else:
@@ -85,7 +97,7 @@ def edit_post(request, pk):
         if form.is_valid():
             post = form.save()
             title = form.cleaned_data['title']
-            post.slug = slugify(title) + '-'+str(post.id)
+            post.slug = slugify(title) + ''+str()
             post.save()
             return redirect('posts')
     form = BlogPostForm(instance=post)

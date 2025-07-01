@@ -22,7 +22,7 @@
                 <!-- Post content-->
                 <section class="mb-5">
                     <p class="fs-5 mb-4">{{ single_blog.short_description }}</p>
-                    <p class="fs-5 mb-4">{{ single_blog.blog_body }}</p>
+                    <p class="fs-5 mb-4">{{ single_blog.blog_body|safe }}</p>
 
                     <!-- Comments -->
                      <h4>Comments ({{ comment_count }})</h4>
@@ -68,13 +68,29 @@
                         <div class="col-sm-6">
                             <ul class="list-unstyled mb-0">
                                 {% for cat in categories %}
-                                <li><a href="{% url 'posts_by_category' cat.id %}">{{ cat.category_name }}</a></li>
+                                <li><a href="{% url 'posts_by_category' cat.slug %}">{{ cat.category_name }}</a></li>
                                 {% endfor %}
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
+
+            
+            <h3 class="text-uppercase style=letter-spacing: 2px;">Recent Articles</h3> 
+                <div class="row-md-2">
+                <div class="col-md-25 blog-main">
+                    {% for post in posts %}
+                    <div class="card border-0" >
+                    <div class="card-body">
+                        <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-dark">{{ post.title }}</a></h5>
+                        <small class="mb-1 text-muted">{{ post.created_at | timesince }} ago | {{ post.author }}</small>
+                        <!--<p class="card-text">{{ post.short_description | truncatewords:20 }}</p>-->
+                    </div>
+                    </div>
+                    {% endfor %}  
+                </div>
+            </div>   
             <!-- Side widget-->
              {% if social_links %}
             <div class="card mb-4 p-3">

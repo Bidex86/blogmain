@@ -5,25 +5,21 @@ from .models import Blog, Category, Comment
 from django.db.models import Q
 
 # Create your views here.
-def posts_by_category(request, category_id):
-    #Fetch the posts that belongs to the category with the id category_id
-    posts = Blog.objects.filter(status='Published', category=category_id)
-    #Use try/except when we want to do some custom actions if the category does not exist
-    try:
-        category = Category.objects.get(pk=category_id)
-    except:
-        #redrect the user to homepage
-        return redirect('home')
-    # Use get_object_or_404 when you want to show 303 error page if the category does not exist
-    #category = get_object_or_404(Category, pk=category_id) 
+def posts_by_category(request, category_slug):
+    category = get_object_or_404(Category, slug=category_slug)
+    posts = Blog.objects.filter(status='Published', category=category)
+    
     context = {
         'posts': posts,
         'category': category,
     }
     return render(request, 'posts_by_category.html', context)
 
-def blogs(request, slug):
+
+def blogs(request, category_slug, slug):
+    category = get_object_or_404(Category, slug=category_slug)
     single_blog = get_object_or_404(Blog, slug=slug, status='Published')
+    posts = Blog.objects.filter(is_featured=False, status='Published')
     if request.method == 'POST':
         comment = Comment()
         comment.user = request.user
@@ -36,6 +32,8 @@ def blogs(request, slug):
     comment_count = comments.count()
     
     context = {
+        'category': category,
+        'posts': posts,
         'single_blog': single_blog,
         'comments': comments,
         'comment_count': comment_count,
