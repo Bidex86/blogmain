@@ -28,14 +28,17 @@
             </form>
         </div>
         <div class="col-4 d-flex justify-content-end align-items-center">
-            {% if not user.is_authenticated %}
-            <a class="btn btn-sm btn-warning" href="{% url 'login' %}">Login</a> &nbsp;
-            <a class="btn btn-sm btn-outline-secondary" href="{% url 'register' %}">Register</a>
-            {%else %}
+        {% if not user.is_authenticated %}
+        <a class="btn btn-sm btn-warning" href="{% url 'login' %}">Login</a> &nbsp;
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'register' %}">Register</a>
+    
+        {% else %}
+            {% if user.is_staff or user.is_superuser %}
             <span><a href="{% url 'dashboard' %}">Dashboard</a></span>
             &emsp;
-            <span><a href="{% url 'logout' %}">Logout</a> </span>
             {% endif %}
+        <span><a href="{% url 'logout' %}">Logout</a></span>
+        {% endif %}
         </div>
         </div>
     </header>
@@ -57,5 +60,38 @@
 <footer class="blog-footer">
 <p>Blog built with � by <a href="#">Bidex Media Communication</a></p>
 </footer>
+    <style>
+        .comment-card {
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 0.5px solid #e0e0e0;
+    border-top: 0px;
+    border-bottom: 0px;
+    border-right: 0px;
+    margin-top: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .thread-level {
+    border-color: #ccc;
+    border-width: 2px;
+    padding-left: 1rem;
+    }
+
+    .thread-level:first-child {
+    margin-top: 1rem;
+    }
+    .thread-level:nth-child(2n) {
+    border-color: #ffc107; /* warning/yellow */
+    }
+
+    .thread-level:nth-child(3n) {
+    border-color: #17a2b8; /* info/blue */
+    }
+
+
+    /* Add more as needed, or use a dynamic class generator */
+    </style>
 </body>
 </html>

@@ -1,13 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from blogs.models import Blog, Category
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,  user_passes_test
 from . forms import BlogPostForm, CategoryForm, AddUserForm, EditUserForm
 from django.template.defaultfilters import slugify
 from django.contrib.auth.models import User
 #from django.http import HttpResponse
 
 # Create your views here.
+def is_admin_user(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
 @login_required(login_url='login')
+@user_passes_test(is_admin_user)
 def dashboard(request):
     category_count = Category.objects.all().count()
     blogs_count = Blog.objects.all().count()
@@ -23,6 +27,8 @@ def categories(request):
 
     return render(request, 'dashboard/categories.html') #{'categories': categories})
 
+@login_required
+@user_passes_test(is_admin_user)
 def add_category(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
@@ -70,6 +76,8 @@ def posts(request):
     }
     return render(request, 'dashboard/posts.html', context)
 
+@login_required
+@user_passes_test(is_admin_user)
 def add_post(request):
     if request.method == 'POST':
         form = BlogPostForm(request.POST, request.FILES)
@@ -90,6 +98,8 @@ def add_post(request):
     }
     return render(request, 'dashboard/add_post.html', context)
 
+@login_required
+@user_passes_test(is_admin_user)
 def edit_post(request, pk):
     post = get_object_or_404(Blog, pk=pk)
     if request.method == 'POST':
@@ -107,6 +117,8 @@ def edit_post(request, pk):
     }
     return render(request, 'dashboard/edit_post.html', context)
 
+@login_required
+@user_passes_test(is_admin_user)
 def delete_post(request, pk):
     post = get_object_or_404(Blog, pk=pk)
     post.delete()
@@ -119,6 +131,8 @@ def users(request):
     }
     return render(request, 'dashboard/users.html', context)
 
+@login_required
+@user_passes_test(is_admin_user)
 def add_user(request):
     if request.method == 'POST':
         form = AddUserForm(request.POST)
@@ -133,6 +147,8 @@ def add_user(request):
     }
     return render(request, 'dashboard/add_user.html', context)
 
+@login_required
+@user_passes_test(is_admin_user)
 def edit_user(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
@@ -146,6 +162,8 @@ def edit_user(request, pk):
     }
     return render(request, 'dashboard/edit_user.html', context)
 
+@login_required
+@user_passes_test(is_admin_user)
 def delete_user(request, pk):
     user = get_object_or_404(User, pk=pk)
     user.delete()

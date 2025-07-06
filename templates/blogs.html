@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-
+{% load custom_filters %}
 {% block content %}
-
+{% load crispy_forms_tags %}
 <!-- Page content-->
 <div class="container mt-5">
     <div class="row">
@@ -21,41 +21,38 @@
                 <figure class="mb-4"><img class="img-fluid rounded" src="{{ single_blog.featured_image.url }}" alt="..." /></figure>
                 <!-- Post content-->
                 <section class="mb-5">
-                    <p class="fs-5 mb-4">{{ single_blog.short_description }}</p>
-                    <p class="fs-5 mb-4">{{ single_blog.blog_body|safe }}</p>
+                    <p class="fs-5 mb-4">{{ single_blog.short_description|strip_outer_p|safe  }}</p>
+                    <p class="fs-5 mb-4">{{ single_blog.blog_body|strip_outer_p|safe  }}</p>
 
-                    <!-- Comments -->
-                     <h4>Comments ({{ comment_count }})</h4>
-                     {% if comments %}
-                        {% for comment in comments %}
-                        <div class="card mt-1">
-                            <div class="card-body">
-                                <p class="card-text mb-0">{{ comment }}</p>
-                                <span>
-                                    <small>@{{ comment.user }}</small>
-                                    <small>| {{ comment.created_at | timesince }} ago</small>
-                                </span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                     {% else %}
-                     No comments yet.
-                     {% endif %}
-                     <br>
-                     <div class="form-group">
-                        {% if user.is_authenticated %}
-                        <form class="" method="POST">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <textarea name="comment" class="form-control" placeholder="write your comment"></textarea>
-                                <input type="submit" value="Submit" class="btn btn-primary mt-2">
-                            </div>
-                        </form>
-                        {% else %}
-                        <p>Please <span><a href="{% url 'login' %}">login</a></span> to write comment!</p>
-                        {% endif %}
-                     </div>
-                    </section>
+                   <!-- Comments Section -->
+                <h4>Conversations <small class="text-muted">{{ comment_count }} comments</small></h4>
+
+                {% if comments %}
+                {% for comment in comments %}
+                    {% include "include/comment_thread.html" with comment=comment depth=1 %}
+                {% endfor %}
+                {% else %}
+                <p class="text-muted">No comments yet.</p>
+                {% endif %}
+
+                <hr>
+                <!-- Add New Top-Level Comment -->
+                <div class="mt-4">
+                {% if user.is_authenticated %}
+                    <h5>Add a Comment</h5>
+                    <form method="POST">
+                    {% csrf_token %}
+                    {{ form | crispy }}
+                    <input type="hidden" name="parent_id" value="">
+                    <input type="submit" value="Submit" class="btn btn-primary mt-2">
+                    </form>
+                {% else %}
+                    <p>Please <a href="{% url 'login' %}">login</a> to write a comment!</p>
+                {% endif %}
+                </div>
+
+
+                </section>
             </article>
         </div>
         <!-- Side widgets-->
@@ -106,5 +103,20 @@
     </div>
 </div>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll('.reply-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const targetId = btn.getAttribute('data-target');
+                const target = document.getElementById(targetId);
+                if (target) {
+                target.classList.toggle('d-none');
+                }
+            });
+            });
+        });
+    </script>
+
+   
 
 {% endblock %}

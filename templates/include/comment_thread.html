@@ -1,0 +1,39 @@
+{% with next_depth=depth|add:1 %}
+  <div class="position-relative ps-3 border-start thread-level"style="margin-left:({ depth|add:0 })rem;">
+    <div class="comment-card">
+      <p class="mb-1">{{ comment.comment }}</p>
+
+      <div class="text-muted small">
+        @{{ comment.user }} • {{ comment.created_at|timesince }} ago
+        {% if comment.replies.count > 0 %}
+          &nbsp;| <a href="javascript:void(0);" class="text-decoration-none reply-toggle fw-bold" data-target="replies-{{ comment.id }}">
+            💬 {{ comment.replies.count }} repl{{ comment.replies.count|pluralize:"y,ies" }}
+          </a>
+        {% endif %}
+      </div>
+
+      {% if user.is_authenticated %}
+        <div class="mt-1">
+          <a href="javascript:void(0);" class="text-primary reply-toggle" data-target="reply-form-{{ comment.id }}">Reply</a>
+        </div>
+
+        <div id="reply-form-{{ comment.id }}" class="reply-form d-none mt-2 ms-2">
+          <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            <input type="submit" value="Reply" class="btn btn-sm btn-outline-primary">
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if comment.replies.count > 0 %}
+      <div id="replies-{{ comment.id }}" class="d-none mt-2">
+        {% for reply in comment.replies.all %}
+          {% include "include/comment_thread.html" with comment=reply depth=next_depth %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endwith %}

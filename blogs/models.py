@@ -36,8 +36,8 @@ class Blog(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     featured_image = models.ImageField(upload_to='uploads/%Y/%m/%d')
-    short_description = CKEditor5Field('Description', config_name='extends')
-    blog_body = CKEditor5Field('Content', config_name='extends')
+    short_description = CKEditor5Field('Description', config_name='default')
+    blog_body = CKEditor5Field('Content', config_name='default')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Draft")
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -50,10 +50,11 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     comment = models.TextField(max_length=250)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.comment
+        return f'{self.user.username}: {self.comment[:30]}'
 
 

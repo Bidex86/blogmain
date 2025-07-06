@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
-
+{% load custom_filters %}
   {% block content %}
-
 
   {% for post in featured_posts %} 
     {% if forloop.first %}
     <div class="jumbotron p-3 p-md-5 text-white rounded bg-dark" style="background-image: url({post.featured_image.url});background-blend-mode: overlay;background-size:cover;"> 
         <div class="col-md-8 px-0">
           <h1 class="display-4 font-italic">{{ post.title }}</h1>
-          <p class="lead my-3">{{ post.short_description | truncatewords:20 }}</p>
+          <p class="lead my-3">{{ post.short_description|strip_outer_p|safe  | truncatewords:20 }}</p>
           <p class="lead mb-0"><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-white font-weight-bold">Continue reading...</a></p>
         </div>
     </div>
@@ -19,19 +18,20 @@
   <!-- Featured posts -->
   <h3 class="text-uppercase text-warning style=letter-spacing: 2px;">Featured Posts</h3>  
   <div class="row mb-2">
-    {% for post in featured_posts %}
+    {% for post in posts %}
       {% if not forloop.first %}
       <div class="col-md-6">
         <div class="card border-0" >
           <div class="card-body">
-            <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-dark">{{ post.title }}</a></h3>
+            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-dark">{{ post.title }}</a></h4>
             <small class="mb-1 text-muted">{{ post.created_at | timesince }} ago | {{ post.author }}</small>
-            <p class="card-text">{{ post.short_description | truncatewords:20 }}</p>
+            <p class="card-text">{{ post.short_description|strip_outer_p|safe  | truncatewords:20 }}</p>
           </div>
         </div>
       </div>
       {% endif %}
     {% endfor %}
+
 
   </div><hr>   
 
@@ -39,16 +39,50 @@
   <main role="main" class="container p-0">
     <div class="row">
       <div class="col-md-8 blog-main">
-        {% for post in posts %}
+        {% for post in page_obj %}
         <div class="card border-0" >
           <div class="card-body">
-            <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-dark">{{ post.title }}</a></h3>
+            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-dark">{{ post.title }}</a></h4>
             <small class="mb-1 text-muted">{{ post.created_at | timesince }} ago | {{ post.author }}</small>
-            <p class="card-text">{{ post.short_description | truncatewords:20 }}</p>
+            <p class="card-text">{{ post.short_description|strip_outer_p|safe  | truncatewords:20 }}</p>
           </div>
         </div>
-        {% endfor %}  
-      </div>
+        {% endfor %}
+        
+    <nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1">First</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+        </li>
+      {% endif %}
+    </ul>
+    </nav>
+    </div>
       <!-- /.blog-main -->
 
       <aside class="col-md-4 blog-sidebar">

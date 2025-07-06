@@ -14,11 +14,6 @@ class BlogPostForm(forms.ModelForm):
     class Meta:
         model = Blog
         fields = ('title', 'category', 'featured_image', 'short_description', 'blog_body', 'status', 'is_featured')
-        widgets = {
-              "text": CKEditor5Widget(
-                  attrs={"class": "django_ckeditor_5"}, config_name="extends"
-              )
-          }
 
 class AddUserForm(UserCreationForm):
     class Meta:
