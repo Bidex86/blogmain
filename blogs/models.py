@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django_ckeditor_5.fields import CKEditor5Field
+from django.urls import reverse
+from taggit.managers import TaggableManager
+
 
 
 # Create your models here.
@@ -40,11 +43,35 @@ class Blog(models.Model):
     blog_body = CKEditor5Field('Content', config_name='default')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Draft")
     is_featured = models.BooleanField(default=False)
+    is_editors_pick = models.BooleanField(default=False)
+    tags = TaggableManager()  # Add this line
+    views = models.IntegerField(default=0)  # Needed for trending logic
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    
+    def get_absolute_url(self):
+        return reverse('blogs', kwargs={
+            'category_slug': self.category.slug,
+            'slug': self.slug
+        })
+    
     def __str__(self):
         return self.title
+    
+class SocialLink(models.Model):
+    platform = models.CharField(max_length=50)
+    link = models.URLField()
+
+    def __str__(self):
+        return self.platform
+
+class SiteSetting(models.Model):
+    social_links = models.ManyToManyField(SocialLink, blank=True)
+
+    def __str__(self):
+        return "Site Settings"
+    
 
 class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

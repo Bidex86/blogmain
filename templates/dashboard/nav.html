@@ -1,0 +1,17 @@
+<div class="sidebar-box">
+  <h5 class="sidebar-title">Trending</h5>
+  {% for post in trending_posts %}
+  <div class="sidebar-item">
+    <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:6 }}</a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="sidebar-box">
+  <h5 class="sidebar-title">Editor's Pick</h5>
+  {% for post in editors_pick %}
+  <div class="sidebar-item">
+    <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:6 }}</a>
+  </div>
+  {% endfor %}
+</div>

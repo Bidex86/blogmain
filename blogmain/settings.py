@@ -31,12 +31,22 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'blogs',
+    'blogs.apps.BlogsConfig',
     'assignment',
     'crispy_forms',
     'dashboards',
     'crispy_bootstrap4',
     'django_ckeditor_5',
+    'accounts.apps.AccountsConfig',
+    'taggit',
+    # allauth apps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    # Providers (Google and Facebook)
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,10 +59,14 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # ✅ CSRF Middleware
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # ✅ Required
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+   
 ]
 
 ROOT_URLCONF = 'blogmain.urls'
@@ -60,7 +74,7 @@ ROOT_URLCONF = 'blogmain.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': [BASE_DIR /'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,7 +82,13 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'blogs.context_processors.get_categories',
-                'blogs.context_processors.get_scoial_links',
+                'blogs.context_processors.get_social_links',  # ✅ Correct name
+                'django.template.context_processors.request',
+                'blogs.context_processors.site_settings',
+                
+                
+                
+
             ],
         },
     },
@@ -122,11 +142,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR /'static'
-STATICFILES_DIRS =[
-    'blogmain/static',
+# settings.py
+
+STATIC_URL = '/static/'
+
+# Include multiple static directories (one per app)
+STATICFILES_DIRS = [
+    BASE_DIR / 'blogmain' / 'static',
 ]
+
+ # Optional — for collectstatic in production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Default primary key field type
@@ -137,6 +163,79 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR /'media'
 CRISPY_TEMPLATE_PACK = 'Bootstrap4'
+
+SITE_ID = 2
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # Default
+    'allauth.account.auth_backends.AuthenticationBackend',  # allauth
+)
+
+LOGIN_URL = 'account_login'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_SIGNUP_REDIRECT_URL = "/"
+
+# Optional: Improve signup behavior
+ACCOUNT_LOGIN_METHODS = {'email'}  # You can also use {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Asterisk * marks required fields
+
+
+# Allow users to log in with social accounts without extra signup
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# Prevent duplicate email registrations
+ACCOUNT_UNIQUE_EMAIL = True
+
+# Automatically link social account if email matches existing user
+#ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+#SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
+# settings.py
+
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.MySocialAccountAdapter"
+
+
+
+# Optional - Turn off email verification (only if you trust Google/Facebook)
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'bidemia02@gmail.com'
+EMAIL_HOST_PASSWORD = 'baci akdd twoo yqmr'
+
+ACCOUNT_FORMS = {
+    'signup': 'accounts.forms.CustomSignupForm',
+    'login': 'accounts.forms.CustomLoginForm',  # if you use a custom form
+}
+
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'secondary',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
+
+
+
 
 
 customColorPalette = [

@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required,  user_passes_test
 from . forms import BlogPostForm, CategoryForm, AddUserForm, EditUserForm
 from django.template.defaultfilters import slugify
 from django.contrib.auth.models import User
+from accounts.models import Profile
 #from django.http import HttpResponse
 
 # Create your views here.
@@ -15,10 +16,12 @@ def is_admin_user(user):
 def dashboard(request):
     category_count = Category.objects.all().count()
     blogs_count = Blog.objects.all().count()
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     
     context = {
         'category_count': category_count,
         'blogs_count': blogs_count,
+        'profile': profile
     }
     return render(request, 'dashboard/dashboard.html', context)
 

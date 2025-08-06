@@ -1,25 +1,62 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.core.paginator import Paginator
 from django.http import HttpResponse, HttpResponseRedirect
-
+from taggit.models import Tag
 from .models import Blog, Category, Comment
 from .forms import CommentForm
 from django.db.models import Q
+from django.db.models import Count
+from django.http import JsonResponse
+
 
 # Create your views here.
+def tag_suggestions(request):
+    query = request.GET.get('q', '').strip()
+
+    if not query:
+        return JsonResponse({'tags': []})
+
+    tags = Tag.objects.filter(name__icontains=query).order_by('name')[:10]
+    return JsonResponse({'tags': [tag.name for tag in tags]})
+
+
+def tagged_posts(request, tag_slug):
+    tag = get_object_or_404(Tag, slug=tag_slug)
+
+    # Posts for this tag
+    posts = Blog.objects.filter(tags__in=[tag]).order_by('-created_at')
+
+    # Trending posts: Most commented posts
+    trending_posts = Blog.objects.annotate(
+        comment_count=Count('comment')
+    ).order_by('-comment_count', '-created_at')[:5]
+
+    # Editor's Picks: Recently published posts (you can also filter by a boolean field if you have one)
+    editors_picks = Blog.objects.order_by('-created_at')[:5]
+
+    return render(request, 'tagged_posts.html', {
+        'tag': tag,
+        'posts': posts,
+        'trending_posts': trending_posts,
+        'editors_picks': editors_picks,
+    })
 def posts_by_category(request, category_slug):
     category = get_object_or_404(Category, slug=category_slug)
     all_posts = Blog.objects.filter(status='Published', category=category)
+    editors_picks = Blog.objects.filter(is_editors_pick=True, status='Published').order_by('-created_at')[:5]
+    
 
     # PAGINATION
     paginator = Paginator(all_posts, 5)  # Show 5 posts per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    
     context = {
-        'posts': all_posts,
+        'all_posts': all_posts,
         'category': category,
         'page_obj': page_obj,
+        'editors_picks': editors_picks
     }
     return render(request, 'posts_by_category.html', context)
 
@@ -27,7 +64,15 @@ def posts_by_category(request, category_slug):
 def blogs(request, category_slug, slug):
     category = get_object_or_404(Category, slug=category_slug)
     single_blog = get_object_or_404(Blog, slug=slug, status='Published')
-    posts = Blog.objects.filter(is_featured=False, status='Published')
+    post = get_object_or_404(Blog, slug=slug, category__slug=category_slug)
+    posts = Blog.objects.filter(is_featured=False, is_editors_pick=False, status='Published')
+
+
+    post.views = post.views + 1
+    post.save(update_fields=['views'])
+
+
+    
 
      # Top-level comments only
     comments = Comment.objects.filter(blog=single_blog, parent__isnull=True).order_by('-created_at')
@@ -56,6 +101,7 @@ def blogs(request, category_slug, slug):
         'category': category,
         'posts': posts,
         'single_blog': single_blog,
+        'post': post,
         'comments': comments,
         'comment_count': comment_count,
         'form': form,

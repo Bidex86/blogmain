@@ -1,0 +1,143 @@
+/* Brand Colors: Red & White */
+body {
+  background-color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.signup-container {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 2rem;
+  background: var(--brand-light);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  color: var(--text-dark);
+}
+
+h2 {
+  color: #e60000;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="text"],
+.form-group input[type="checkbox"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.form-errors {
+  background-color: #ffe6e6;
+  border: 1px solid #e60000;
+  padding: 10px;
+  margin-bottom: 15px;
+  color: #a70000;
+  border-radius: 8px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #e60000;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.submit-btn:hover {
+  background-color: #cc0000;
+}
+
+/* Social buttons */
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.google-btn,
+.facebook-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  padding: 0.65rem;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.google-btn {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  color: #444;
+}
+
+.facebook-btn {
+  background-color: #1877f2;
+  color: #fff;
+}
+
+.divider {
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
+
+.alert-danger {
+  background-color: #ffebee;
+  color: #b71c1c;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 6px;
+}
+
+* Links */
+.register-link {
+  text-align: center;
+  margin-top: 1rem;
+  color: #555;
+}
+
+.register-link a {
+  color: var(--brand-primary);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .signup-container {
+    margin: 30px 1rem;
+    padding: 1.5rem;
+  }
+
+  .social-buttons {
+    flex-direction: column;
+  }
+}
+

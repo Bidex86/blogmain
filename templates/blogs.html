@@ -1,122 +1,121 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load custom_filters %}
+
+{% block title %}{{ single_blog.title }} | My Blog{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+    <script src="{% static 'js/blog.js' %}" defer></script>
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{{ single_blog.title }}">
+    <meta property="og:description" content="{{ single_blog.short_description|truncatewords:20 }}">
+    <meta property="og:image" content="{{ single_blog.featured_image.url }}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="article">
+
+{% endblock %}
+
 {% block content %}
 {% load crispy_forms_tags %}
-<!-- Page content-->
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-8">
-            <!-- Post content-->
-            <article>
-                <!-- Post header-->
-                <header class="mb-4">
-                    <!-- Post title-->
-                    <h1 class="fw-bolder mb-1">{{ single_blog.title }}</h1>
-                    <!-- Post meta content-->
-                    <div class="text-muted fst-italic mb-2">Posted on {{ single_blog.created_at }} by {{ single_blog.author }}</div>
-                    <!-- Post category-->
-                    <a class="badge bg-primary text-decoration-none text-light" href="#!">{{ single_blog.category }}</a>
-                </header>
-                <!-- Preview image figure-->
-                <figure class="mb-4"><img class="img-fluid rounded" src="{{ single_blog.featured_image.url }}" alt="..." /></figure>
-                <!-- Post content-->
-                <section class="mb-5">
-                    <p class="fs-5 mb-4">{{ single_blog.short_description|strip_outer_p|safe  }}</p>
-                    <p class="fs-5 mb-4">{{ single_blog.blog_body|strip_outer_p|safe  }}</p>
+<div class="blog-container">
+    <!-- MAIN CONTENT -->
+    <main class="blog-main">
+        <article class="blog-post">
+            <header class="blog-header">
+                <h1><a href="{{ blog.get_absolute_url }}">{{ single_blog.title }}</a></h1>
+                <p class="meta">Posted on {{ single_blog.created_at }} by {{ single_blog.author }}</p>
+                <a class="category-tag" href="{% url 'posts_by_category' single_blog.category.slug %}">
+                    {{ single_blog.category }}
+                </a>
+            </header>
 
-                   <!-- Comments Section -->
-                <h4>Conversations <small class="text-muted">{{ comment_count }} comments</small></h4>
-
-                {% if comments %}
-                {% for comment in comments %}
-                    {% include "include/comment_thread.html" with comment=comment depth=1 %}
-                {% endfor %}
-                {% else %}
-                <p class="text-muted">No comments yet.</p>
-                {% endif %}
-
-                <hr>
-                <!-- Add New Top-Level Comment -->
-                <div class="mt-4">
-                {% if user.is_authenticated %}
-                    <h5>Add a Comment</h5>
-                    <form method="POST">
-                    {% csrf_token %}
-                    {{ form | crispy }}
-                    <input type="hidden" name="parent_id" value="">
-                    <input type="submit" value="Submit" class="btn btn-primary mt-2">
-                    </form>
-                {% else %}
-                    <p>Please <a href="{% url 'login' %}">login</a> to write a comment!</p>
-                {% endif %}
-                </div>
-
-
-                </section>
-            </article>
-        </div>
-        <!-- Side widgets-->
-        <div class="col-lg-4">
-            <!-- Categories widget-->
-            <div class="card mb-4 p-3">
-                <h4 class="font-italic">Categories</h4>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <ul class="list-unstyled mb-0">
-                                {% for cat in categories %}
-                                <li><a href="{% url 'posts_by_category' cat.slug %}">{{ cat.category_name }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
+            <div class="social-share">
+                <h5>Share this post:</h5>
+                <div class="share-buttons">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="share-btn facebook">
+                        <i class="fab fa-facebook-f"></i> Facebook
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ single_blog.title }}" target="_blank" class="share-btn twitter">
+                        <i class="fab fa-twitter"></i> Twitter
+                    </a>
+                    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}" target="_blank" class="share-btn linkedin">
+                        <i class="fab fa-linkedin-in"></i> LinkedIn
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text={{ single_blog.title }} - {{ request.build_absolute_uri }}" target="_blank" class="share-btn whatsapp">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </a>
                 </div>
             </div>
 
-            
-            <h3 class="text-uppercase style=letter-spacing: 2px;">Recent Articles</h3> 
-                <div class="row-md-2">
-                <div class="col-md-25 blog-main">
-                    {% for post in posts %}
-                    <div class="card border-0" >
-                    <div class="card-body">
-                        <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" class="text-dark">{{ post.title }}</a></h5>
-                        <small class="mb-1 text-muted">{{ post.created_at | timesince }} ago | {{ post.author }}</small>
-                        <!--<p class="card-text">{{ post.short_description | truncatewords:20 }}</p>-->
-                    </div>
-                    </div>
-                    {% endfor %}  
-                </div>
-            </div>   
-            <!-- Side widget-->
-             {% if social_links %}
-            <div class="card mb-4 p-3">
-                <h4 class="font-italic">Follow Us</h4>
-                <ol class="list-unstyled">
-                    {% for i in social_links %}
-                    <li><a href="{{ i.link }}" target="_blank">{{ i.platform }}</a></li>
+
+            <figure class="featured-image">
+                <img src="{{ single_blog.featured_image.url }}" alt="{{ single_blog.title }}">
+            </figure>
+
+            <section class="blog-content">
+                <p>{{ single_blog.short_description|strip_outer_p|safe }}</p>
+                <p>{{ single_blog.blog_body|strip_outer_p|safe }}</p>
+            </section>
+
+            {% if single_blog.tags.all %}
+            <div class="blog-tags">
+                <h5>Tags:</h5>
+                <div class="tag-list">
+                    {% for tag in single_blog.tags.all %}
+                        <a href="{% url 'tagged_posts' tag.slug %}" class="tag">{{ tag.name }}</a>
                     {% endfor %}
-                </ol>
+                </div>
             </div>
             {% endif %}
-        </div>
-    </div>
+
+
+            <!-- COMMENTS -->
+            <section class="comments">
+                <h5>Conversations <small>({{ comment_count }} comments)</small></h5>
+
+                <!-- Add Comment -->
+                <div class="add-comment">
+                    {% if user.is_authenticated %}
+                        <h6>Add a Comment</h6>
+                        <form method="POST" class="add-comment-form">
+                            {% csrf_token %}
+                            <textarea name="comment" rows="2" placeholder="Write your comment..."></textarea>
+                            <input type="hidden" name="parent_id" value="">
+                            <button type="submit" class="btn-submit">Submit</button>
+                        </form>
+
+                    {% else %}
+                        <p>Please <a href="{% url 'account_login' %}">login</a> to write a comment!</p>
+                    {% endif %}
+                </div>
+
+                <!-- Comment Thread -->
+                {% if comments %}
+                    {% for comment in comments %}
+                        {% include "include/comment_thread.html" with comment=comment depth=1 %}
+                    {% endfor %}
+                {% else %}
+                    <p class="no-comments">No comments yet.</p>
+                {% endif %}
+            </section>
+        </article>
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="blog-sidebar">
+        <section class="recent-articles">
+            <h3>Recent Articles</h3>
+            {% for post in posts %}
+                <div class="sidebar-article">
+                    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+                    <div class="article-info">
+                        <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h5>
+                        <small>{{ post.created_at|timesince }} ago | {{ post.author }}</small>
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+    </aside>
 </div>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll('.reply-toggle').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const targetId = btn.getAttribute('data-target');
-                const target = document.getElementById(targetId);
-                if (target) {
-                target.classList.toggle('d-none');
-                }
-            });
-            });
-        });
-    </script>
-
-   
 
 {% endblock %}

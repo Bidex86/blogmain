@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Posts tagged "{{ tag.name }}" | My Blog  {% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/tagged_posts.css' %}">
+{% endblock %}
+{% block content %}
+<div class="tagged-posts-container">
+    <!-- Tag Title -->
+    <h2 class="tag-title">Posts tagged: <span>{{ tag.name }}</span></h2>
+
+    {% if posts %}
+        <div class="tag-layout">
+            <!-- LEFT SIDEBAR -->
+            <aside class="sidebar left-sidebar">
+                <h4 class="sidebar-title">Trending</h4>
+                {% for post in trending_posts %}
+                    <div class="sidebar-item">
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+                        <div class="sidebar-text">
+                            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
+                            <span class="post-date">{{ post.created_at|timesince }} ago</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="empty-text">No trending posts</p>
+                {% endfor %}
+            </aside>
+
+            <!-- MAIN FEATURED POSTS -->
+            <main class="main-content">
+                {% for post in posts %}
+                    <article class="featured-post">
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+                        <h3>
+                            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a>
+                        </h3>
+                        <span class="post-meta">{{ post.created_at|timesince }} ago | {{ post.author }}</span>
+                        <p>{{ post.short_description|strip_outer_p|safe|truncatewords:25 }}</p>
+                    </article>
+                {% endfor %}
+            </main>
+
+            <!-- RIGHT SIDEBAR -->
+            <aside class="sidebar right-sidebar">
+                <h4 class="sidebar-title">Editor's Picks</h4>
+                {% for post in editors_picks %}
+                    <div class="sidebar-item">
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+                        <div class="sidebar-text">
+                            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
+                            <span class="post-date">{{ post.created_at|timesince }} ago</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="empty-text">No editor picks</p>
+                {% endfor %}
+            </aside>
+        </div>
+    {% else %}
+        <p class="no-posts">No posts found for this tag.</p>
+    {% endif %}
+</div>
+{% endblock %}
