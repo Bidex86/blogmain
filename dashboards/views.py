@@ -87,10 +87,10 @@ def add_post(request):
         if form.is_valid():
             post = form.save(commit=False) # temporarily saving the form
             post.author = request.user
-            post.save()
+        
             title = form.cleaned_data['title']
             post.slug = slugify(title) + ''+str()
-            post.save()
+            #post.save()
             return redirect('posts')
         else:
             print('form is invalid')
@@ -154,16 +154,17 @@ def add_user(request):
 @user_passes_test(is_admin_user)
 def edit_user(request, pk):
     user = get_object_or_404(User, pk=pk)
+
     if request.method == 'POST':
-        form = EditUserForm(request.POST, instance=user)
+        form = EditUserForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
             return redirect('users')
-    form = EditUserForm(instance=user)
-    context = {
-        'form': form,
-    }
-    return render(request, 'dashboard/edit_user.html', context)
+    else:
+        form = EditUserForm(instance=user)
+
+    return render(request, 'dashboard/edit_user.html', {'form': form})
+
 
 @login_required
 @user_passes_test(is_admin_user)

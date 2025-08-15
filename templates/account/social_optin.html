@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load pipeline %}
+
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
 <style>

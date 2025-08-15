@@ -1,42 +1,44 @@
-{% extends 'base.html' %}
+{% extends 'dashboard/dashboard.html' %}
 
-{% block content %}
-<div class="row">
-    <!-- left sidebar -->
-    <!-- load the sidebar here -->
-     {% include 'dashboard/sidebar.html' %}
-
-    <!-- Right side content -->
-     <div class="col-md-9">
-        <table class="table table-hover">
-            <h1>All Categories</h1>
-            <a href="{% url 'add_category' %}" class="btn btn-dark text-light float-right mb-2">Add Me</a>
-            <thead>
-                <tr>
-                <th scope="col">S/N</th>
-                <th scope="col">Category Name</th>
-                <th scope="col">Created At</th>
-                <th scope="col">Updated At</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cat in categories %}
-                <tr>
-                <th scope="row" >{{ forloop.counter}}</th>
-                <td>{{ cat }}</td>
-                <td>{{ cat.created_at }}</td>
-                <td>{{ cat.updated_at }}</td>
-                <td>
-                    <a href="{% url 'edit_category' cat.id %}"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#008000"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h357l-80 80H200v560h560v-278l80-80v358q0 33-23.5 56.5T760-120H200Zm280-360ZM360-360v-170l367-367q12-12 27-18t30-6q16 0 30.5 6t26.5 18l56 57q11 12 17 26.5t6 29.5q0 15-5.5 29.5T897-728L530-360H360Zm481-424-56-56 56 56ZM440-440h56l232-232-28-28-29-28-231 231v57Zm260-260-29-28 29 28 28 28-28-28Z"/></svg>Edit</a>
-                    <a href="{% url 'delete_category' cat.id %}"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ff0000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>Trash</a>
-                </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <br>
+{% block dashboard_content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">All Categories</h1>
+    <a href="{% url 'add_category' %}" class="btn-primary">+ Add Category</a>
 </div>
 
-
+<div class="dashboard-table-wrapper">
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>S/N</th>
+                <th>Category Name</th>
+                <th>Created At</th>
+                <th>Updated At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ cat }}</td>
+                <td>{{ cat.created_at|date:"Y-m-d" }}</td>
+                <td>{{ cat.updated_at|date:"Y-m-d" }}</td>
+                <td class="action-buttons">
+                    <a href="{% url 'edit_category' cat.id %}" class="action-btn edit-btn">
+                        ✏️ Edit
+                    </a>
+                    <a href="{% url 'delete_category' cat.id %}" class="action-btn delete-btn">
+                        🗑️ Delete
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-message">No categories found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

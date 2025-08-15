@@ -1,121 +1,161 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load image_filters %}
+{% load auto_link %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
 {% load custom_filters %}
+
+
+{% block meta_description %}{{ post.excerpt|truncatewords:25 }}{% endblock %}
+{% block meta_keywords %}{{ post.tags.all|join:", " }}{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.excerpt|truncatewords:25 }}{% endblock %}
+{% block og_image %}{{ post.featured_image.url }}{% endblock %}
+{% block twitter_title %}{{ post.title }}{% endblock %}
+{% block twitter_description %}{{ post.excerpt|truncatewords:25 }}{% endblock %}
+{% block twitter_image %}{{ post.featured_image.url }}{% endblock %}
 
 {% block title %}{{ single_blog.title }} | My Blog{% endblock %}
 {% block head %}
-    <link rel="stylesheet" href="{% static 'css/blog.css' %}">
-    <script src="{% static 'js/blog.js' %}" defer></script>
-    <link rel="canonical" href="{{ request.build_absolute_uri }}">
-    <meta property="og:title" content="{{ single_blog.title }}">
-    <meta property="og:description" content="{{ single_blog.short_description|truncatewords:20 }}">
-    <meta property="og:image" content="{{ single_blog.featured_image.url }}">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:type" content="article">
 
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+<meta property="og:title" content="{{ single_blog.title }}">
+<meta property="og:description" content="{{ single_blog.short_description|truncatewords:20 }}">
+<meta property="og:image" content="{{ single_blog.featured_image.url }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:type" content="article">
 {% endblock %}
 
 {% block content %}
 {% load crispy_forms_tags %}
 <div class="blog-container">
-    <!-- MAIN CONTENT -->
-    <main class="blog-main">
-        <article class="blog-post">
-            <header class="blog-header">
-                <h1><a href="{{ blog.get_absolute_url }}">{{ single_blog.title }}</a></h1>
-                <p class="meta">Posted on {{ single_blog.created_at }} by {{ single_blog.author }}</p>
-                <a class="category-tag" href="{% url 'posts_by_category' single_blog.category.slug %}">
-                    {{ single_blog.category }}
-                </a>
-            </header>
+  <main class="blog-main">
+    <article class="blog-post">
+      <header class="blog-header">
+        <h1><a href="{{ blog.get_absolute_url }}">{{ single_blog.title }}</a></h1>
+        <p class="meta">Posted on {{ single_blog.created_at }} by {{ single_blog.author }}</p>
+        <a class="category-tag" href="{% url 'posts_by_category' single_blog.category.slug %}">{{ single_blog.category }}</a>
+      </header>
 
-            <div class="social-share">
-                <h5>Share this post:</h5>
-                <div class="share-buttons">
-                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="share-btn facebook">
-                        <i class="fab fa-facebook-f"></i> Facebook
-                    </a>
-                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ single_blog.title }}" target="_blank" class="share-btn twitter">
-                        <i class="fab fa-twitter"></i> Twitter
-                    </a>
-                    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}" target="_blank" class="share-btn linkedin">
-                        <i class="fab fa-linkedin-in"></i> LinkedIn
-                    </a>
-                    <a href="https://api.whatsapp.com/send?text={{ single_blog.title }} - {{ request.build_absolute_uri }}" target="_blank" class="share-btn whatsapp">
-                        <i class="fab fa-whatsapp"></i> WhatsApp
-                    </a>
-                </div>
-            </div>
+      <div class="social-share">
+        <h5>Share this post:</h5>
+        <div class="share-buttons">
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="share-btn facebook">
+            <i class="fab fa-facebook-f"></i> Facebook
+          </a>
+          <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ single_blog.title }}" target="_blank" class="share-btn twitter">
+            <i class="fab fa-twitter"></i> Twitter
+          </a>
+          <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}" target="_blank" class="share-btn linkedin">
+            <i class="fab fa-linkedin-in"></i> LinkedIn
+          </a>
+          <a href="https://api.whatsapp.com/send?text={{ single_blog.title }} - {{ request.build_absolute_uri }}" target="_blank" class="share-btn whatsapp">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+          </a>
+        </div>
+      </div>
 
+      <figure class="featured-image">
+        {% seo_responsive_image single_blog alt="Featured image for '{{ single_blog.title }}'" css_class="img-featured-post" context_name="full"%}
+      </figure>
+      
+     
 
-            <figure class="featured-image">
-                <img src="{{ single_blog.featured_image.url }}" alt="{{ single_blog.title }}">
-            </figure>
+      {% auto_link_bundle single_blog.blog_body related_posts as auto %}
 
-            <section class="blog-content">
-                <p>{{ single_blog.short_description|strip_outer_p|safe }}</p>
-                <p>{{ single_blog.blog_body|strip_outer_p|safe }}</p>
-            </section>
+      <section class="blog-content">
+        <p>{{ single_blog.short_description|strip_outer_p|safe }}</p>
+        <p>{{ auto.content|strip_outer_p|safe }}</p>
+      </section>
 
-            {% if single_blog.tags.all %}
-            <div class="blog-tags">
-                <h5>Tags:</h5>
-                <div class="tag-list">
-                    {% for tag in single_blog.tags.all %}
-                        <a href="{% url 'tagged_posts' tag.slug %}" class="tag">{{ tag.name }}</a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
+      {% if single_blog.tags.all %}
+      <div class="blog-tags">
+        <h5>Tags:</h5>
+        <div class="tag-list">
+          {% for tag in single_blog.tags.all %}
+            <a href="{% url 'tagged_posts' tag.slug %}" class="tag">{{ tag.name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
+      <section class="comments">
+        <h5>Conversations <small>({{ comment_count }} comments)</small></h5>
 
-            <!-- COMMENTS -->
-            <section class="comments">
-                <h5>Conversations <small>({{ comment_count }} comments)</small></h5>
+        <div class="add-comment">
+          {% if user.is_authenticated %}
+            <h6>Add a Comment</h6>
+            <form method="POST" class="add-comment-form">
+              {% csrf_token %}
+              <textarea name="comment" rows="2" placeholder="Write your comment..."></textarea>
+              <input type="hidden" name="parent_id" value="">
+              <button type="submit" class="btn-submit">Submit</button>
+            </form>
+          {% else %}
+            <p>Please <a href="{% url 'account_login' %}">login</a> to write a comment!</p>
+          {% endif %}
+        </div>
 
-                <!-- Add Comment -->
-                <div class="add-comment">
-                    {% if user.is_authenticated %}
-                        <h6>Add a Comment</h6>
-                        <form method="POST" class="add-comment-form">
-                            {% csrf_token %}
-                            <textarea name="comment" rows="2" placeholder="Write your comment..."></textarea>
-                            <input type="hidden" name="parent_id" value="">
-                            <button type="submit" class="btn-submit">Submit</button>
-                        </form>
+        {% if comments %}
+          {% for comment in comments %}
+            {% include "include/comment_thread.html" with comment=comment depth=1 %}
+          {% endfor %}
+        {% else %}
+          <p class="no-comments">No comments yet.</p>
+        {% endif %}
+      </section>
+    </article>
+  </main>
 
-                    {% else %}
-                        <p>Please <a href="{% url 'account_login' %}">login</a> to write a comment!</p>
-                    {% endif %}
-                </div>
-
-                <!-- Comment Thread -->
-                {% if comments %}
-                    {% for comment in comments %}
-                        {% include "include/comment_thread.html" with comment=comment depth=1 %}
-                    {% endfor %}
-                {% else %}
-                    <p class="no-comments">No comments yet.</p>
-                {% endif %}
-            </section>
-        </article>
-    </main>
-
-    <!-- SIDEBAR -->
-    <aside class="blog-sidebar">
-        <section class="recent-articles">
-            <h3>Recent Articles</h3>
-            {% for post in posts %}
-                <div class="sidebar-article">
-                    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
-                    <div class="article-info">
-                        <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h5>
-                        <small>{{ post.created_at|timesince }} ago | {{ post.author }}</small>
-                    </div>
-                </div>
-            {% endfor %}
-        </section>
-    </aside>
+  <aside class="blog-sidebar">
+    <section class="recent-articles">
+      <h3>Recent Articles</h3>
+      {% for post in posts %}
+        <div class="sidebar-article">
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-post" context_name="sidebar"%}
+          <div class="article-info">
+            <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h5>
+            <small>{{ post.created_at|timesince }} ago | {{ post.author }}</small>
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+  </aside>
 </div>
 
+
+
+
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "{{ request.build_absolute_uri }}"
+  },
+  "headline": "{{ post.title|escapejs }}",
+  "description": "{{ post.short_description|striptags|truncatechars:150|escapejs }}",
+  "image": "{{ post.featured_image.url }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ post.author.get_full_name|default:post.author.username|escapejs }}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "{{ site_settings.site_name|default:'My Blog' }}",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ site_settings.logo.url }}"
+    }
+  },
+  "datePublished": "{{ post.created_at|date:'c' }}",
+  "dateModified": "{{ post.updated_at|date:'c' }}"
+}
+</script>
+{% endblock %}
 {% endblock %}

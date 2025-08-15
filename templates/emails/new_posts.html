@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
+{% load pipeline %}
+
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
 
   {% block content %}
 

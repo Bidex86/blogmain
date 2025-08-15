@@ -1,26 +1,25 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load image_filters %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
 {% load custom_filters %}
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
 
 {% block content %}
 <section class="featured-section">
   <!-- Trending -->
   <div class="sidebar trending">
-    <h3></h3>
     {% for post in trending_posts %}
       <div class="trending-post">
-        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-trending" context_name="sidebar" %}
         <div class="side-post">
-          <h4>
-            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}
-          </h4>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-              <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
-            </a>
+          <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+          <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+          <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
         </div>
       </div>
     {% endfor %}
@@ -30,135 +29,105 @@
   <div class="main-feature">
     {% if featured_post %}
       <div class="featured-article">
-        <img src="{{ featured_post.featured_image.url }}" alt="{{ featured_post.title }}">
+        {% seo_responsive_image featured_post alt="Featured image for '{{ featured_post.title }}'" css_class="img-featured-article" context_name="full" %}
         <div class="overlay">
-          <h2>
-            <a href="{% url 'blogs' category_slug=featured_post.category.slug slug=featured_post.slug %}">
-              {{ featured_post.title }}
-            
-          </h2>
-              <p>{{ featured_post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-              <span class="datetime">{{ featured_post.created_at|date:"M d, Y" }}</span>
-            </a>
+          <h2><a href="{% url 'blogs' category_slug=featured_post.category.slug slug=featured_post.slug %}">{{ featured_post.title }}</a></h2>
+          <p>{{ featured_post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+          <span class="datetime">{{ featured_post.created_at|date:"M d, Y" }}</span>
         </div>
       </div>
     {% endif %}
-
   </div>
 
   <!-- Editor's Picks -->
   <div class="sidebar editors-picks">
-    <h3></h3>
     {% for post in editors_picks %}
       <div class="editors-post">
-        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" %}
         <div class="side-post">
-          <h4>
-            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}
-          </h4>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-              <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
-            </a>
+          <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+          <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+          <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
         </div>
       </div>
     {% endfor %}
   </div>
 </section>
-
-
 
 <!-- Recent Articles Section -->
 <section class="recent-articles">
   <h2>Recent Articles</h2>
   <div class="grid-4">
     {% for post in page_obj %}
-    <div class="article-card">
-      <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
-        <h4>{{ post.title }}</h4>
-      </a>
-      <p>{{ post.short_description|strip_outer_p|safe |truncatewords:15 }}</p>
-    </div>
+      {% if post.slug %}
+        <div class="article-card">
+          <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
+            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-article-card" context_name="post" %}
+            <h4>{{ post.title }}</h4>
+          </a>
+          <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
+        </div>
+      {% endif %}
     {% endfor %}
   </div>
 </section>
 
 {% for category, posts in category_posts.items %}
 <section class="category-block">
-  <!-- Divider -->
   <div class="category-divider"></div>
 
-  <!-- Clickable Category Title -->
-  <h2>
-     <a href="{% url 'posts_by_category' category_slug=category.slug %}">
-      {{ category.category_name }}
-    </a>
-  </h2>
+  <h2><a href="{% url 'posts_by_category' category_slug=category.slug %}">{{ category.category_name }}</a></h2>
 
   <div class="category-layout">
-    <!-- Trending (Left) -->
     <div class="category-sidebar">
       {% for post in posts|slice:"1:3" %}
+        {% if post.slug %}
         <div class="sidebar-item">
-        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
-        <div class="side-post">
-          <h4>
-            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-              {{ post.title }}
-            </a>
-          </h4>
-          <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context_name="sidebar" %}
+          <div class="side-post">
+            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+          </div>
         </div>
-      </div>
-
+        {% endif %}
       {% endfor %}
     </div>
 
-    <!-- Main Feature (Center) -->
     <div class="main-feature">
       {% if posts %}
         {% with post=posts.0 %}
-        <div class="featured-article">
-          <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-            <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
-            <div class="overlay">
-              <h2>{{ post.title }}</h2>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-              <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
-            </div>
-          </a>
-        </div>
+          <div class="featured-article">
+            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
+              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context_name="full" %}
+              <div class="overlay">
+                <h2>{{ post.title }}</h2>
+                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+                <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+              </div>
+            </a>
+          </div>
         {% endwith %}
       {% endif %}
     </div>
 
-    <!-- Editor’s Picks (Right) -->
     <div class="category-sidebar-right">
       {% for post in posts|slice:"3:5" %}
         <div class="sidebar-item-right">
-          <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar-right" context_name="sidebar" %}
           <div class="side-post">
-            <h4>
-              <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-                {{ post.title }}
-              </a>
-            </h4>
+            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
             <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
           </div>
         </div>
-
       {% endfor %}
     </div>
   </div>
 
-
-
-  <!-- Grid 3 -->
   <div class="grid-3">
     {% for post in posts|slice:"3:6" %}
       <div class="article-card">
         <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-          <img src="{{ post.featured_image.url }}" alt="{{ post.title }}">
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-grid" context_name="post" %}
           <h5>{{ post.title }}</h5>
           <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
           <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
@@ -169,40 +138,24 @@
 </section>
 {% endfor %}
 
-
-
-
-<!-- ⏩ PAGINATION -->
 <nav aria-label="Page navigation">
   <ul class="pagination justify-content-center">
     {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page=1">First</a>
-      </li>
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-      </li>
+      <li class="page-item"><a class="page-link" href="?page=1">First</a></li>
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
     {% endif %}
 
     {% for num in page_obj.paginator.page_range %}
       {% if page_obj.number == num %}
-        <li class="page-item active">
-          <span class="page-link">{{ num }}</span>
-        </li>
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
       {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-        </li>
+        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
       {% endif %}
     {% endfor %}
 
     {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-      </li>
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-      </li>
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
     {% endif %}
   </ul>
 </nav>

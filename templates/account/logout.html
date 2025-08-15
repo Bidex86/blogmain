@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
+{% load pipeline %}
+
+{% stylesheet 'main' %}
+{% javascript 'main' %}
 {% block title %}Sign Out{% endblock %}
+
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
 <div class="container mt-5 mb-5">

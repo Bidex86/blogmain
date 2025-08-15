@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: 
+
+/accounts/
+
+Sitemap: https://yourdomain.com/sitemap.xml

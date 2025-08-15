@@ -1,5 +1,9 @@
 <!-- Header Part -->
 {% load static %}
+
+{% load pipeline %}
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,8 +19,24 @@
     <link rel="next" href="?page={{ page_obj.next_page_number }}">
   {% endif %}
 
-  <meta name="description" content="{% block meta_description %}News{% endblock %}">
-  <meta name="keywords" content="News, Sports, Entertainment, Politics">
+ <!-- Dynamic Meta Tags -->
+  <meta name="description" content="{% block meta_description %}{{ site_settings.meta_description|default:'Latest tech, news, and blog articles.' }}{% endblock %}">
+  <meta name="keywords" content="{% block meta_keywords %}{{ site_settings.meta_keywords|default:'news, business, sports, entertainment' }}{% endblock %}">
+  <meta name="author" content="{{ site_settings.meta_author|default:'Your Site Name' }}">
+  <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+  
+
+  <meta property="og:title" content="{% block og_title %}{{ site_settings.site_name|default:'My Blog Site' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ site_settings.meta_description|default:'Latest blog updates' }}{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image" content="{% block og_image %}{{ site_settings.site_logo.url|default:'' }}{% endblock %}">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ site_settings.site_name|default:'My Blog Site' }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ site_settings.meta_description|default:'Latest blog updates' }}{% endblock %}">
+  <meta name="twitter:image" content="{% block twitter_image %}{{ site_settings.site_logo.url|default:'' }}{% endblock %}">
+
 
   <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
   
@@ -25,8 +45,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link href="{% static 'css/base.css' %}" rel="stylesheet">
-  <script src="{% static 'js/base.js' %}" defer></script>
+  
+  {% stylesheet 'main' %}
+  {% javascript 'main' %}
   <!-- Page-specific Styles (login, signup) -->
   {% block head %}{% endblock %}
 </head>
@@ -211,6 +232,8 @@
         }
     </script>
     {% endif %}
+
+    {% block jsonld %}{% endblock %}
 
 
 </body>

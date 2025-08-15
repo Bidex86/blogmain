@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.core.paginator import Paginator
 from blogs.models import Blog, Category
 
+
 def home(request):
     # Featured post
     featured_post = Blog.objects.filter(is_featured=True, status='Published').order_by('-created_at').first()
@@ -15,8 +16,8 @@ def home(request):
     #categories = Category.objects.all()
 
     # Recent posts with pagination
-    all_posts = Blog.objects.filter(status='Published').order_by('-created_at')
-    paginator = Paginator(all_posts, 10)  # Show 6 per page
+    posts = Blog.objects.filter(status='Published').order_by('-created_at')
+    paginator = Paginator(posts, 10)  # Show 6 per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

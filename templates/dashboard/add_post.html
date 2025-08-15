@@ -1,27 +1,37 @@
-{% extends 'base.html' %}
-
-
-{% block content %}
+{% extends 'dashboard/dashboard.html' %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
 {% load crispy_forms_tags %}
 
-<div class="row">
-    <!-- left sidebar -->
-    <!-- load the sidebar here -->
-     {% include 'dashboard/sidebar.html' %}
-
-    <!-- Right side content -->
-     <div class="col-md-9">
-        <h2>Add New Post</h2>
-
-        <form action="{% url 'add_post' %}" method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.media }}
-            {{ form | crispy }}
-            
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-        <br>
-     </div>
+{% block dashboard_content %}
 
 
+<div class="dashboard-container">
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <h2 class="dashboard-title">Add New Post</h2>
+
+        {% if post %}
+            <div class="post-preview">
+                <h3>{{ post.title }}</h3>
+                <p>{{ post.body|slice:":300" }}...</p>
+                <a href="/post/{{ post.slug }}/" class="btn-primary">Read More</a>
+                <hr>
+                <small>
+                    If you no longer wish to receive updates,
+                    <a href="/unsubscribe/">unsubscribe here</a>.
+                </small>
+            </div>
+        {% endif %}
+
+        <div class="dashboard-form-wrapper">
+            <form action="{% url 'add_post' %}" method="POST" enctype="multipart/form-data" class="dashboard-form">
+                {% csrf_token %}
+                {{ form.media }}
+                {{ form|crispy }}
+                <button type="submit" class="btn-primary">Submit</button>
+            </form>
+        </div>
+    </main>
+</div>
 {% endblock %}

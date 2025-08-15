@@ -1,0 +1,595 @@
+/* ===========================
+   GLOBAL LAYOUT
+=========================== */
+body {
+  margin: 0;
+  background: #fff;
+  color: #000;
+}
+
+.blog-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+a {
+    color: black;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ===========================
+   BLOG MAIN CONTENT
+=========================== */
+.blog-main {
+    background: #fff;
+}
+
+.blog-header h1 {
+    font-size: 2rem;
+    color: black;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+}
+
+.blog-header .meta {
+    font-size: 0.9rem;
+    color: #777;
+}
+
+.category-tag {
+    display: inline-block;
+    background: #b80000;
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    margin-top: 0.4rem;
+}
+
+.featured-image img {
+    width: 100%;
+    border-radius: 5px;
+    margin: 1rem 0;
+}
+
+.blog-content p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+/* ===========================
+   COMMENTS
+=========================== */
+.comments h5 {
+    border-bottom: 2px solid #b80000;
+    padding-bottom: 0.3rem;
+    margin-top: 2rem;
+}
+
+.add-comment-form {
+    margin-top: 10px;
+    max-width: 500px;
+}
+
+.add-comment-form textarea {
+    width: 100%;
+    resize: none;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.add-comment-form .btn-submit {
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.add-comment-form .btn-submit:hover {
+    background: #c9302c;
+}
+
+.no-comments {
+    font-size: 0.9rem;
+    color: #777;
+}
+
+/* Comment Wrapper */
+.comment-thread {
+    position: relative;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.comment-thread[data-depth="1"] {
+    margin-left: 0;
+}
+
+.comment-thread[data-depth="2"] {
+    margin-left: 15px;
+    border-left: 2px solid #ff9800; /* Orange for level 2 */
+    padding-left: 10px;
+}
+
+.comment-thread[data-depth="3"] {
+    margin-left: 25px;
+    border-left: 2px solid #2196f3; /* Blue for level 3 */
+    padding-left: 10px;
+}
+
+.comment-thread[data-depth="4"],
+.comment-thread[data-depth="5"] {
+    margin-left: 35px;
+    border-left: 2px solid #4caf50; /* Green for deeper levels */
+    padding-left: 10px;
+}
+
+/* Comment card */
+.comment-card {
+    background: #fff;
+    padding: 0.8rem;
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.comment-header {
+    font-size: 0.9rem;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.comment-text {
+    font-size: 0.95rem;
+    color: #444;
+    margin-bottom: 0.5rem;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.comment-actions button {
+    border: none;
+    background: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+}
+
+.comment-actions button:hover {
+    text-decoration: underline;
+}
+
+.datetime {
+    font-size: 0.75rem;
+    color: #777;
+}
+
+.comment-actions .reply-count {
+    font-size: 13px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.comment-actions i {
+    font-size: 14px;
+}
+.reply-count-toggle {
+    background: none;
+    border: none;
+    color: #007bff;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+.reply-count-toggle:hover {
+    text-decoration: underline;
+}
+
+
+/* Reply Button */
+.reply-toggle {
+    background: none;
+    border: none;
+    color: #b80000;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 0.4rem;
+    padding: 0;
+}
+
+.reply-toggle:hover {
+    text-decoration: underline;
+}
+
+/* Reply Form */
+.reply-form {
+    margin-top: 6px;
+    max-width: 450px;
+}
+
+.reply-form textarea {
+    width: 100%;
+    resize: none;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.reply-form .btn-submit {
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 3px 8px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.reply-form .btn-submit:hover {
+    background: #c9302c;
+}
+
+
+/* Nested replies indentation */
+.nested-replies {
+    position: relative;
+    margin-left: 12px;
+    padding-left: 10px;
+}
+
+.nested-replies.depth-2 { margin-left: 20px; }
+.nested-replies.depth-3 { margin-left: 30px; }
+.nested-replies.depth-4 { margin-left: 40px; }
+
+/* ===========================
+   FOOTER
+=========================== */
+.social-share {
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.social-share h5 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.8rem;
+    color: #333;
+}
+
+.share-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    transition: background 0.3s ease;
+}
+
+.share-btn i {
+    font-size: 14px;
+}
+
+.share-btn.facebook { background: #3b5998; }
+.share-btn.twitter { background: #1da1f2; }
+.share-btn.linkedin { background: #0077b5; }
+.share-btn.whatsapp { background: #25d366; }
+
+.share-btn:hover { opacity: 0.85; }
+
+.blog-tags {
+    margin: 1.5rem 0;
+}
+
+.blog-tags h5 {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    display: inline-block;
+    background: #f5f5f5;
+    color: #333;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.tag:hover {
+    background: #ff4b4b;
+    color: #fff;
+}
+ .tag-suggestions {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    position: absolute;
+    z-index: 1000;
+    max-width: 300px;
+    width: 100%;
+}
+
+.suggestion-item {
+    padding: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.suggestion-item:hover {
+    background: #f0f0f0;
+}
+
+.selected-tags {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.selected-tags .tag {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.selected-tags .tag .remove-tag {
+    cursor: pointer;
+    color: red;
+    font-weight: bold;
+}
+
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .comment-card {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .nested-replies {
+        margin-left: 0.8rem;
+    }
+
+    .reply-form textarea {
+        font-size: 0.85rem;
+    }
+
+    .btn-reply {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.6rem;
+    }
+}
+
+
+/* ===========================
+   SIDEBAR
+=========================== */
+.blog-sidebar {
+    background: #fff;
+}
+
+.blog-sidebar h3,
+.blog-sidebar h4 {
+    font-size: 1.3rem;
+    color: #b80000;
+    border-bottom: 2px solid #b80000;
+    margin-bottom: 1rem;
+    padding-bottom: 0.3rem;
+}
+
+.sidebar-article {
+    display: flex;
+    gap: 0.6rem;
+    border-bottom: 1px solid #ddd;
+    padding: 0.5rem 0;
+}
+
+.sidebar-article img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.sidebar-article h5 {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.sidebar-article small {
+    font-size: 0.75rem;
+    color: #777;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+=========================== */
+@media (max-width: 768px) {
+    .blog-container {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar-article {
+        flex-direction: row;
+    }
+
+    .sidebar-article img {
+        width: 60px;
+        height: 50px;
+    }
+
+}
+/* Inline Related Articles */
+.related-inline {
+    background: #f8f8f8; /* light gray */
+    border-left: 4px solid #c00; /* red accent */
+    padding: 10px 15px;
+    margin: 15px 0;
+    font-family: Arial, sans-serif;
+    border-radius: 4px;
+}
+
+.related-inline h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #c00;
+}
+
+.related-inline ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.related-inline li {
+    padding: 5px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.related-inline li:last-child {
+    border-bottom: none;
+}
+
+.related-inline a {
+    text-decoration: none;
+    color: #000;
+}
+
+.related-inline a:hover {
+    color: #c00;
+}
+
+/* More Related Articles at the end */
+.related-more {
+    background: #fff;
+    border-top: 2px solid #c00;
+    padding: 12px;
+    margin-top: 25px;
+    border-radius: 4px;
+}
+
+.related-more h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #c00;
+}
+
+.related-more ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.related-more li {
+    padding: 5px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.related-more li:last-child {
+    border-bottom: none;
+}
+
+.related-more a {
+    text-decoration: none;
+    color: #000;
+}
+
+.related-more a:hover {
+    color: #c00;
+}
+
+/* 📱 Mobile Optimisation */
+@media (max-width: 768px) {
+    .related-inline,
+    .related-more {
+        padding: 10px;
+    }
+
+    .related-inline h4,
+    .related-more h4 {
+        font-size: 15px;
+    }
+
+    .related-inline li,
+    .related-more li {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .related-inline,
+    .related-more {
+        margin-left: -5px;
+        margin-right: -5px;
+        border-radius: 0;
+    }
+
+    .related-inline h4,
+    .related-more h4 {
+        font-size: 14px;
+    }
+
+    .related-inline li,
+    .related-more li {
+        font-size: 12px;
+        padding: 4px 0;
+    }
+}

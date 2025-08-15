@@ -8,7 +8,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class BlogAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
-    list_display = ('title', 'category', 'author', 'status', 'is_featured', 'is_editors_pick', 'views', 'created_at')
+    list_display = ('title', 'category', 'seo_keywords', 'author', 'status', 'is_featured', 'is_editors_pick', 'views', 'created_at')
     search_fields = ('id', 'title', 'category__category_name', 'status')
     list_editable = ('is_featured', 'is_editors_pick',)
 

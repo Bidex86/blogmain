@@ -1,29 +1,29 @@
-{% extends 'base.html' %}
+{% extends 'dashboard/dashboard.html' %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
-
-{% block content %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
 {% load crispy_forms_tags %}
 
-<div class="row">
-    <!-- left sidebar -->
-    <!-- load the sidebar here -->
-     {% include 'dashboard/sidebar.html' %}
+{% block dashboard_content %}
+<div class="dashboard-container">
+    <div class="dashboard-main">
+        <div class="form-card">
+            {% if perms.auth.add_user %}
+            <form action="{% url 'add_user' %}" method="POST" enctype="multipart/form-data" class="user-form">
+                {% csrf_token %}
+                {{ form|crispy }}
 
-    <!-- Right side content -->
-     <div class="col-md-9">
-        {% if perms.auth.add_user %}
-        <h2>Add New User</h2>
+                <button type="submit" class="btn-submit">Submit</button>
+            </form>
 
-        <form action="{% url 'add_user' %}" method="POST">
-            {% csrf_token %}
-            {{ form | crispy }}
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-        <br>
-        {% else %}
-        <h5>You do not have permissions to view this page</h5>
-        {% endif %}
-     </div>
-
-
+            {% else %}
+            <div class="no-permission">
+                <h5>🚫 You do not have permissions to view this page.</h5>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

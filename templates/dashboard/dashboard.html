@@ -1,37 +1,63 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+{% load pipeline %}
+
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+
+
 
 {% block content %}
- 
-<div class="row">
-    <!-- left sidebar -->
-    <!-- load the sidebar here-->
-     {% include 'dashboard/sidebar.html' %}
+<div class="dashboard-container">
     
-    <!-- Right side content -->
-      
-     <div class="col-md-9">
-        <span>Logged in as <b>{{ user }}</b></span>
-        <div class="row">
-            <div class="col">
-                <div class="card border-default mb-3">
-                    <div class="card-header text-center text-uppercase font-weight-bold">All Categories</div>
-                    <div class="card-body text-dark">
-                        <h5 class="card.title text-center">{{ category_count }}</h5>
-                    </div>
-                </div>
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-logo">
+            <h2>MyCMS</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">
+                <span>🏠</span> Dashboard
+            </a>
+            <a href="{% url 'posts' %}" class="{% if request.path == '/dashboard/posts/' %}active{% endif %}">
+                <span>📝</span> Posts
+            </a>
+            <a href="{% url 'categories' %}" class="{% if request.path == '/dashboard/categories/' %}active{% endif %}">
+                <span>📂</span> Categories
+            </a>
+            <a href="{% url 'users' %}" class="{% if request.path == '/dashboard/users/' %}active{% endif %}">
+                <span>👤</span> Users
+            </a>
+            
+            <a href="{% url 'account_logout' %}">
+                <span>🚪</span> Logout
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <h1>{% block dashboard_title %}Dashboard{% endblock %}</h1>
+        </header>
+        <section class="dashboard-content">
+            {% block dashboard_content %}
+            <p class="dashboard-user">Logged in as <strong>{{ user }}</strong></p>
+
+        <div class="dashboard-cards">
+            <div class="dashboard-card">
+                <h3 class="card-title">All Categories</h3>
+                <p class="card-value">{{ category_count }}</p>
             </div>
 
-            <div class="col">
-                <div class="card border-default mb-3">
-                    <div class="card-header text-center text-uppercase font-weight-bold">All Posts</div>
-                    <div class="card-body text-dark">
-                        <h5 class="card.title text-center">{{ blogs_count }}</h5>
-                    </div>
-                </div>
+            <div class="dashboard-card">
+                <h3 class="card-title">All Posts</h3>
+                <p class="card-value">{{ blogs_count }}</p>
             </div>
         </div>
-     </div>
+            {% endblock %}
+        </section>
+    </main>
 </div>
-<br>
-
 {% endblock %}

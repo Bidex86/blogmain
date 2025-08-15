@@ -7,6 +7,16 @@ from .forms import CommentForm
 from django.db.models import Q
 from django.db.models import Count
 from django.http import JsonResponse
+from django.http import HttpResponse
+
+
+def robots_txt(request):
+    lines = [
+        "User-Agent: *",
+        "Disallow:",
+        "Sitemap: https://127.0.0.1:8000/sitemap.xml"
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
 
 
 # Create your views here.
@@ -67,14 +77,23 @@ def blogs(request, category_slug, slug):
     post = get_object_or_404(Blog, slug=slug, category__slug=category_slug)
     posts = Blog.objects.filter(is_featured=False, is_editors_pick=False, status='Published')
 
-
-    post.views = post.views + 1
+    # Increase view count
+    post.views += 1
     post.save(update_fields=['views'])
 
+    # In your blogs view
+    related_posts = Blog.objects.filter(
+        category=post.category,
+        status='Published'
+    ).exclude(
+        id=post.id
+    ).exclude(
+        slug__isnull=True
+    ).exclude(
+        slug=''
+    )[:5]
 
-    
-
-     # Top-level comments only
+    # Top-level comments
     comments = Comment.objects.filter(blog=single_blog, parent__isnull=True).order_by('-created_at')
     comment_count = Comment.objects.filter(blog=single_blog).count()
 
@@ -82,7 +101,7 @@ def blogs(request, category_slug, slug):
 
     if request.method == 'POST':
         form = CommentForm(request.POST)
-        parent_id = request.POST.get('parent_id')  # comes from hidden input
+        parent_id = request.POST.get('parent_id')
 
         if form.is_valid():
             comment = form.save(commit=False)
@@ -94,14 +113,14 @@ def blogs(request, category_slug, slug):
                 except Comment.DoesNotExist:
                     comment.parent = None
             comment.save()
-            return HttpResponseRedirect(request.path_info)  # refresh page cleanly
+            return HttpResponseRedirect(request.path_info)
 
-    
     context = {
         'category': category,
         'posts': posts,
         'single_blog': single_blog,
         'post': post,
+        'related_posts': related_posts,  # ✅ Pass to template
         'comments': comments,
         'comment_count': comment_count,
         'form': form,

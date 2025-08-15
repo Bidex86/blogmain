@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'blogs.apps.BlogsConfig',
+    'blogs.apps.BlogConfig',
     'assignment',
     'crispy_forms',
     'dashboards',
@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django_ckeditor_5',
     'accounts.apps.AccountsConfig',
     'taggit',
+    'django.contrib.sitemaps',
+    'pipeline',
     # allauth apps
     'allauth',
     'allauth.account',
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -145,6 +148,46 @@ USE_TZ = True
 # settings.py
 
 STATIC_URL = '/static/'
+
+STATICFILES_STORAGE = 'pipeline.storage.PipelineManifestStorage'
+PIPELINE = {
+    'CSS_COMPRESSOR': 'pipeline.compressors.cssmin.CSSMinCompressor',
+    'JS_COMPRESSOR': 'pipeline.compressors.jsmin.JSMinCompressor',
+}
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'pipeline.finders.PipelineFinder',
+]
+
+PIPELINE['STYLESHEETS'] = {
+    'main': {
+        'source_filenames': (
+                'css/base.css',
+                'css/dashboard.css',    # base styles first
+                'css/home.css',    # page layout
+                'css/blog.css',    # blog specific
+                'css/page.css',
+                'css/tagged_posts.css',
+                
+        ),
+        'output_filename': 'css/main.min.css',
+    },
+}
+
+PIPELINE['JAVASCRIPT'] = {
+    'main': {
+        'source_filenames': (
+                'js/base.js',    # base styles first
+                'js/blog.js',    # blog specific,
+                'js/home.js',
+        ),
+        'output_filename': 'js/main.min.js',
+    },
+}
+
+
 
 # Include multiple static directories (one per app)
 STATICFILES_DIRS = [
