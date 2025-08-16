@@ -196,6 +196,14 @@
             </div>
         </div>
 
+        <div class="footer-links">
+            <a href="{% url 'page_detail' slug='about-us' %}">About Us</a>
+            <a href="{% url 'page_detail' slug='cookies' %}">Cookies</a>
+            <a href="{% url 'page_detail' slug='privacy-policy' %}">Privacy Policy</a>
+            <a href="{% url 'page_detail' slug='terms-of-use' %}">Terms of Use</a>
+            <a href="{% url 'page_detail' slug='contact-us' %}">Contact Us</a>
+        </div>
+
         <div class="footer-bottom">
             <p>Blog built with ❤️ by <a href="#">Bidex Media Communication</a></p>
             <p>&copy; {{ now|date:"Y" }} Blog. All rights reserved.</p>

@@ -11,48 +11,50 @@
 
 {% block content %}
 <section class="featured-section">
-  <!-- Trending -->
-  <div class="sidebar trending">
-    {% for post in trending_posts %}
-      <div class="trending-post">
-        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-trending" context_name="sidebar" %}
-        <div class="side-post">
-          <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
-          <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-          <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+  <div class="featured-layout">
+    <!-- Trending -->
+    <div class="sidebar trending">
+      {% for post in trending_posts %}
+        <div class="trending-post">
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-trending" context_name="sidebar" %}
+          <div class="side-post">
+            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+            <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+          </div>
         </div>
-      </div>
-    {% endfor %}
-  </div>
+      {% endfor %}
+    </div>
 
-  <!-- Main Feature -->
-  <div class="main-feature">
-    {% if featured_post %}
-      <div class="featured-article">
-        {% seo_responsive_image featured_post alt="Featured image for '{{ featured_post.title }}'" css_class="img-featured-article" context_name="full" %}
-        <div class="overlay">
-          <h2><a href="{% url 'blogs' category_slug=featured_post.category.slug slug=featured_post.slug %}">{{ featured_post.title }}</a></h2>
-          <p>{{ featured_post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-          <span class="datetime">{{ featured_post.created_at|date:"M d, Y" }}</span>
+    <!-- Main Feature -->
+    <div class="main-feature">
+      {% if featured_post %}
+        <div class="featured-article">
+          {% seo_responsive_image featured_post alt="Featured image for '{{ featured_post.title }}'" css_class="img-featured-article" context_name="full" %}
+          <div class="overlay">
+            <h2><a href="{% url 'blogs' category_slug=featured_post.category.slug slug=featured_post.slug %}">{{ featured_post.title }}</a></h2>
+            <p>{{ featured_post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+            <span class="datetime">{{ featured_post.created_at|date:"M d, Y" }}</span>
+          </div>
         </div>
-      </div>
-    {% endif %}
-  </div>
+      {% endif %}
+    </div>
 
-  <!-- Editor's Picks -->
-  <div class="sidebar editors-picks">
-    {% for post in editors_picks %}
-      <div class="editors-post">
-        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" %}
-        <div class="side-post">
-          <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
-          <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-          <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+    <!-- Editor's Picks -->
+    <div class="sidebar editors-picks">
+      {% for post in editors_picks %}
+        <div class="editors-post">
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" %}
+          <div class="side-post">
+            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+            <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+          </div>
         </div>
-      </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
   </div>
-</section>
+</section> 
 
 <!-- Recent Articles Section -->
 <section class="recent-articles">

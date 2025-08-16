@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% load image_filters %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+
+{% block title %}{{ page.title }} - My Site{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <h1 class="page-title">{{ page.title }}</h1>
+    <div class="page-content">
+        {{ page.content|safe }}
+    </div>
+</div>
+{% endblock %}

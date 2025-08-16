@@ -26,6 +26,9 @@
             <a href="{% url 'categories' %}" class="{% if request.path == '/dashboard/categories/' %}active{% endif %}">
                 <span>📂</span> Categories
             </a>
+            <a href="{% url 'page_list' %}" class="{% if request.path == '/dashboard/pages/' %}active{% endif %}">
+                <span>📄</span> Pages
+            </a>
             <a href="{% url 'users' %}" class="{% if request.path == '/dashboard/users/' %}active{% endif %}">
                 <span>👤</span> Users
             </a>

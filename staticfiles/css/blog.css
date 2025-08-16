@@ -17,7 +17,7 @@ body {
 }
 
 a {
-    color: black;
+    color: #b80000;
     text-decoration: none;
 }
 
@@ -34,8 +34,7 @@ a:hover {
 
 .blog-header h1 {
     font-size: 2rem;
-    color: black;
-    font-weight: bold;
+    color: #b80000;
     margin-bottom: 0.3rem;
 }
 

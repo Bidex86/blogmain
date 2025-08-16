@@ -1,0 +1,17 @@
+{% extends "dashboard/dashboard.html" %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+{% block dashboard_title %}Delete Page{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-container delete-container">
+    <h2>Delete Page</h2>
+    <p class="delete-warning">Are you sure you want to delete "<strong>{{ page.title }}</strong>"?</p>
+    <form method="post" class="delete-form">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger">Yes, Delete</button>
+        <a href="{% url 'page_list' %}" class="btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'dashboard/dashboard.html' %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+{% load crispy_forms_tags %}
+
+{% block dashboard_title %}Edit Page{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-container">
+    <h2>Edit Page: {{ page.title }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.media }}
+        {{ form|crispy }}
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Update Page</button>
+            <a href="{% url 'page_list' %}" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

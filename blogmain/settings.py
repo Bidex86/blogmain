@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'assignment',
     'crispy_forms',
     'dashboards',
+    'pages',
     'crispy_bootstrap4',
     'django_ckeditor_5',
     'accounts.apps.AccountsConfig',
@@ -170,6 +171,7 @@ PIPELINE['STYLESHEETS'] = {
                 'css/blog.css',    # blog specific
                 'css/page.css',
                 'css/tagged_posts.css',
+                'css/pagess.css',
                 
         ),
         'output_filename': 'css/main.min.css',

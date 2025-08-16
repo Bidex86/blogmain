@@ -1,0 +1,41 @@
+{% extends "dashboard/dashboard.html" %}
+{% block dashboard_title %}Manage Pages{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-header">
+    <h2>Pages</h2>
+    <a href="{% url 'page_create' %}" class="btn-primary">+ Create Page</a>
+</div>
+
+<div class="table-wrapper">
+    <table class="dashboard-table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Slug</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for page in pages %}
+            <tr>
+                <td>{{ page.title }}</td>
+                <td>{{ page.slug }}</td>
+                <td>{{ page.created_at|date:"Y-m-d" }}</td>
+                <td>{{ page.updated_at|date:"Y-m-d" }}</td>
+                <td>
+                    <a href="{% url 'page_edit' page.pk %}" class="btn-secondary">Edit</a>
+                    <a href="{% url 'page_delete' page.pk %}" class="btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="no-data">No pages found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

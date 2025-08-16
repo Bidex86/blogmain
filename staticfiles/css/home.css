@@ -21,16 +21,22 @@ h2, h3, h4, h5 {
    FEATURED SECTION (Desktop)
 =========================== */
 .featured-section {
+  padding: 4rem;
+  margin-top: 0.2rem;
+}
+.featured-layout {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   gap: 1rem;
-  padding: 4rem;
+  align-items: start;
 }
 
 /* Sidebar (Trending & Editors) */
 .sidebar {
   background: none;
+  
 }
+
 
 /*.sidebar h3 {
   margin-bottom: 0.5rem;
@@ -49,8 +55,7 @@ h2, h3, h4, h5 {
   flex-direction: column; /* Stack for desktop */
   border-bottom: 1px solid #ddd;
   padding-bottom: 0.6rem;
-  margin-bottom: 0.6rem;
-  
+  margin-bottom: 0.6rem;  
 }
 
 .trending-post:last-child,
@@ -58,6 +63,7 @@ h2, h3, h4, h5 {
 .sidebar-item:last-child,
 .sidebar-item-right:last-child {
   border-bottom: none;
+  
 }
 
 /* Sidebar images */
@@ -383,6 +389,10 @@ h2, h3, h4, h5 {
     gap: 1rem;
     padding: 1rem;
     
+  }
+
+  .featured-layout{
+    grid-template-columns: 1fr;
   }
 
   .featured-post,

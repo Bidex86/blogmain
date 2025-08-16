@@ -299,6 +299,22 @@ body {
     text-decoration: underline;
 }
 
+.footer-links {
+    text-align: center;
+    padding: 15px 0;
+    font-size: 0.9rem;
+}
+
+.footer-links a {
+    color: white; /* BBC-style red */
+    text-decoration: none;
+    margin: 0 5px;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
 /* Theme Toggle Button */
 #theme-toggle {
     margin-top: 0.5rem;

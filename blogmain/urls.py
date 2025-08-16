@@ -27,6 +27,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home' ),
     path('', include('blogs.urls')),
+    path('pages/', include('pages.urls')),
     
      # Specific routes come FIRST
     path("accounts/", include("accounts.urls")),
@@ -40,6 +41,7 @@ urlpatterns = [
 
     # Catch-all blog detail view (should come LAST)
     path('<slug:category_slug>/<slug:slug>/', BlogsView.blogs, name='blogs'),
+    
     # Serve robots.txt
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 ]
