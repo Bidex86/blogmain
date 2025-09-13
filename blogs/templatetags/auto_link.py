@@ -2,6 +2,7 @@ import re
 from django import template
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.html import escape
 
 register = template.Library()
 
@@ -61,13 +62,13 @@ def auto_link_bundle(content, related_posts):
         inline_posts = related_posts[:4]
         more_posts = related_posts[4:]
 
-        inline_html = '<div class="related-inline"><h4></h4><ul>'
+        inline_html = '<div class="related-inline"><h4>Read also</h4><ul>'
         for rp in inline_posts:
             try:
                 url = reverse('blogs', kwargs={'category_slug': rp.category.slug, 'slug': rp.slug})
             except Exception:
                 continue
-            inline_html += f'<li><a href="{url}">{rp.title}</a></li>'
+            inline_html += f'<li><a href="{escape(url)}">{escape(rp.title)}</a></li>'
         inline_html += '</ul></div>'
 
         # Place after 2nd paragraph

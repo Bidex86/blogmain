@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+
+{% block title %}Profile Settings - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-cog"></i> Profile Settings</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Current Avatar Display -->
+                        <div class="form-group text-center mb-4">
+                            <img src="{{ profile.get_avatar_url }}" 
+                                 alt="Current avatar" 
+                                 class="rounded-circle mb-3"
+                                 style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #ddd;"
+                                 onerror="this.src='/static/images/default-avatar.png'">
+                            <h6>Current Profile Picture</h6>
+                        </div>
+                        
+                        <!-- Avatar Upload -->
+                        <div class="form-group">
+                            <label for="{{ form.avatar.id_for_label }}" class="form-label">
+                                <i class="fas fa-camera"></i> Update Profile Picture
+                            </label>
+                            {{ form.avatar }}
+                            <small class="form-text text-muted">
+                                Choose a new profile picture (JPG, PNG, GIF). Maximum size: 2MB
+                            </small>
+                        </div>
+                        
+                        <!-- Newsletter Subscription -->
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.newsletter_opt_in }}
+                                <label class="form-check-label" for="{{ form.newsletter_opt_in.id_for_label }}">
+                                    <i class="fas fa-envelope"></i> {{ form.newsletter_opt_in.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Notifications -->
+                        <h5 class="mt-4 mb-3"><i class="fas fa-bell"></i> Email Notifications</h5>
+                        
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.email_on_reply }}
+                                <label class="form-check-label" for="{{ form.email_on_reply.id_for_label }}">
+                                    {{ form.email_on_reply.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.email_on_mention }}
+                                <label class="form-check-label" for="{{ form.email_on_mention.id_for_label }}">
+                                    {{ form.email_on_mention.label }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <a href="/" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Account Management Links -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-shield"></i> Account Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="{% url 'account_change_password' %}" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-key"></i> Change Password
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'account_email' %}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-envelope"></i> Manage Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

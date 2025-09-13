@@ -1,0 +1,154 @@
+/* Brand colors */
+:root {
+  --brand-primary: #d32f2f; /* red */
+  --brand-light: #ffffff;  /* white */
+  --text-dark: #222;
+  --text-light: #f8f8f8;
+}
+
+/* Container */
+/* Container */
+.login-container {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 2rem;
+  background-color:var(--brand-light);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Headings */
+.form-title {
+  font-size: 1.8rem;
+  color: #d62828;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.alt-login-title {
+  text-align: center;
+  font-size: 1.2rem;
+  margin: 1.5rem 0 1rem;
+  color: #444;
+}
+
+/* Alerts */
+.alert.error-message {
+  background-color: #ffe5e5;
+  border: 1px solid #d62828;
+  color: #d62828;
+  padding: 1rem;
+  border-radius: 5px;
+  margin-bottom: 1.2rem;
+}
+
+/* Form */
+.login-form input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.submit-btn {
+  background-color: var(--text-dark);
+  color: white;
+  padding: 0.75rem;
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background-color: #c01818;
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 1.5rem 0;
+}
+
+/* Social Buttons */
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.social-buttons .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  padding: 0.6rem;
+  border-radius: 5px;
+  font-weight: 500;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.google-btn {
+  background-color: #db4437;
+}
+
+.google-btn:hover {
+  background-color: #c1351d;
+}
+
+.facebook-btn {
+  background-color: #3b5998;
+}
+
+.facebook-btn:hover {
+  background-color: #2d4373;
+}
+
+/* Register link */
+.register-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.register-link a {
+  color: #d62828;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Icon styling */
+.icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.social-note {
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+/* Responsive */
+@media screen and (max-width: 480px) {
+  .login-container {
+    margin: 20px;
+    padding: 1.5rem;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+  }
+}

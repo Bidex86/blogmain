@@ -14,22 +14,28 @@
                 <th>Category Name</th>
                 <th>Created At</th>
                 <th>Updated At</th>
-                <th>Actions</th>
+                <th>Edit</th>
+                <th>Delete</th>
             </tr>
         </thead>
         <tbody>
             {% for cat in categories %}
             <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ cat }}</td>
+                <td>{{ cat.category_name }}</td>
                 <td>{{ cat.created_at|date:"Y-m-d" }}</td>
                 <td>{{ cat.updated_at|date:"Y-m-d" }}</td>
                 <td class="action-buttons">
-                    <a href="{% url 'edit_category' cat.id %}" class="action-btn edit-btn">
-                        ✏️ Edit
+                    <a href="{% url 'edit_category' cat.id %}" class="btn-icon edit">
+                        ✏️
                     </a>
-                    <a href="{% url 'delete_category' cat.id %}" class="action-btn delete-btn">
-                        🗑️ Delete
+                </td>
+                <td class="action-buttons">
+                    <a href="{% url 'delete_category' cat.id %}" 
+                       class="btn-icon delete"
+                       data-item-name="{{ cat.category_name }}"
+                       data-item-type="category">
+                        🗑️
                     </a>
                 </td>
             </tr>

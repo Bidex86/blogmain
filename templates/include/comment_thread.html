@@ -1,40 +1,39 @@
-<div class="comment-thread" data-depth="{{ depth }}">
-    <div class="comment-card">
-        <div class="comment-header">
-            <strong>{{ comment.user.username }}</strong>
-            <span class="datetime">{{ comment.created_at|timesince }} ago</span>
-        </div>
-        <div class="comment-text">{{ comment.comment|linebreaks }}</div>
-
-        <div class="comment-actions">
-            <button class="reply-toggle" data-target="reply-form-{{ comment.id }}">
-                <i class="fa fa-reply"></i> Reply
-            </button>
-
-            {% if comment.replies.count > 0 %}
-                <button class="reply-count-toggle" 
-                        data-target="replies-{{ comment.id }}" 
-                        data-count="{{ comment.replies.count }}">
-                    <i class="fa fa-comments"></i> View {{ comment.replies.count }} replies
-                </button>
-            {% endif %}
-        </div>
-
-        <!-- Reply form -->
-        <form method="POST" action="" class="reply-form d-none" id="reply-form-{{ comment.id }}">
-            {% csrf_token %}
-            <textarea name="comment" rows="2" placeholder="Write a reply..."></textarea>
-            <input type="hidden" name="parent_id" value="{{ comment.id }}">
-            <button type="submit" class="btn-submit">Reply</button>
-        </form>
-
+<!-- comment_thread.html -->
+<div class="comment depth-{{ depth|default:0 }}" id="comment-{{ comment.id }}">
+  <div class="depth-indicator"></div>
+  
+  <div class="comment-header">
+    <div class="comment-author">
+      {% if comment.user.profile.avatar %}
+        <img src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.username }}" class="avatar">
+      {% else %}
+        <div class="avatar-placeholder">{{ comment.user.username|first|upper }}</div>
+      {% endif %}
+      <span class="username">{{ comment.user.get_full_name|default:comment.user.username }}</span>
     </div>
-
-    {% if comment.replies.count > 0 %}
-        <div class="nested-replies d-none depth-{{ depth }}" id="replies-{{ comment.id }}">
-            {% for reply in comment.replies.all %}
-                {% include "include/comment_thread.html" with comment=reply depth=depth|add:1 %}
-            {% endfor %}
-        </div>
-    {% endif %}
+    
+    <div class="comment-meta">
+      <span class="comment-date">{{ comment.created_at|timesince }} ago</span>
+      {% if user.is_authenticated %}
+        <button class="reply-btn" 
+                data-comment-id="{{ comment.id }}" 
+                data-comment-author="{{ comment.user.get_full_name|default:comment.user.username }}">
+          Reply
+        </button>
+      {% endif %}
+    </div>
+  </div>
+  
+  <div class="comment-content">
+    {{ comment.comment|linebreaks }}
+  </div>
+  
+  <!-- Nested replies -->
+  {% if comment.children.all %}
+    <div class="comment-replies">
+      {% for reply in comment.children.all %}
+        {% include "include/comment_thread.html" with comment=reply depth=depth|add:1 %}
+      {% endfor %}
+    </div>
+  {% endif %}
 </div>

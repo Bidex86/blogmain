@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,21 +32,23 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'taggit',
     'blogs.apps.BlogConfig',
+    'comments.apps.CommentsConfig',  # Make sure this uses the proper app config
     'assignment',
     'crispy_forms',
     'dashboards',
     'pages',
     'crispy_bootstrap4',
     'django_ckeditor_5',
-    'accounts.apps.AccountsConfig',
-    'taggit',
+    
     'django.contrib.sitemaps',
     'pipeline',
     # allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'accounts.apps.AccountsConfig',
     # Providers (Google and Facebook)
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
@@ -58,41 +61,64 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
-
+# MIDDLEWARE - Fixed (remove duplicates)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # ✅ CSRF Middleware
-    'django.contrib.auth.middleware.AuthenticationMiddleware',  # ✅ Required
-    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+    # Add the admin no-cache middleware BEFORE cache middleware
+    'dashboards.middleware.AdminNoCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',  # Add this for caching
+    'comments.middleware.CommentRateLimitMiddleware',  # Add comment rate limiting
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-   
+    'django.middleware.cache.FetchFromCacheMiddleware',  # Add this for caching
 ]
 
 ROOT_URLCONF = 'blogmain.urls'
 
+# COMMENT SYSTEM SETTINGS - Consolidated
+COMMENTS_SETTINGS = {
+    'MAX_DEPTH': 4,
+    'MAX_LENGTH': 1000,
+    'ALLOW_ANONYMOUS': False,
+    'MODERATION_REQUIRED': False,
+    'ALLOW_EDITING': True,
+    'EDIT_TIME_LIMIT': 15,  # minutes
+    'PAGINATION_SIZE': 10,
+    'ENABLE_LIKES': True,
+    'ENABLE_FLAGS': True,
+    'AUTO_APPROVE': True,
+    'RATE_LIMIT_SECONDS': 30,  # Seconds between comments
+    'SPAM_DETECTION': True,
+}
+
+# Individual settings for backward compatibility
+COMMENTS_MAX_DEPTH = COMMENTS_SETTINGS['MAX_DEPTH']
+COMMENTS_MAX_LENGTH = COMMENTS_SETTINGS['MAX_LENGTH']
+COMMENTS_ALLOW_ANONYMOUS = COMMENTS_SETTINGS['ALLOW_ANONYMOUS']
+COMMENTS_MODERATION_REQUIRED = COMMENTS_SETTINGS['MODERATION_REQUIRED']
+COMMENTS_ALLOW_EDITING = COMMENTS_SETTINGS['ALLOW_EDITING']
+COMMENTS_EDIT_TIME_LIMIT = COMMENTS_SETTINGS['EDIT_TIME_LIMIT']
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR /'templates'],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'blogs.context_processors.get_categories',
-                'blogs.context_processors.get_social_links',  # ✅ Correct name
-                'django.template.context_processors.request',
+                'blogs.context_processors.get_social_links',
                 'blogs.context_processors.site_settings',
-                
-                
-                
-
             ],
         },
     },
@@ -100,17 +126,96 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'blogmain.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# FIXED: Single Database Configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'CONN_MAX_AGE': 600,  # Keep connections alive for 10 minutes
     }
 }
 
+# FIXED: Single Cache Configuration - Use local memory for development
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Alternative Redis Cache Configuration (commented out for now)
+# Uncomment and use this if you want Redis caching:
+"""
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            # Note: CLIENT_CLASS parameter removed as it's deprecated
+        },
+        'KEY_PREFIX': 'blog_cache',
+        'TIMEOUT': 900,  # 15 minutes
+    }
+}
+"""
+
+# Cache settings for specific views
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 100  # 1 minutes
+CACHE_MIDDLEWARE_KEY_PREFIX = 'blog'
+
+# Add cache control for specific URLs
+CACHE_CONTROL_URLS = {
+    '/dashboard/': {'max_age': 0, 'no_cache': True},  # Never cache admin
+    '/admin/': {'max_age': 0, 'no_cache': True},      # Never cache Django admin
+}
+
+# Add this function to create cache-aware templates
+def get_cache_key(request, view_name=None):
+    """Generate cache keys that are user and permission aware"""
+    key_parts = [
+        request.path,
+        f"user_{request.user.id}" if request.user.is_authenticated else "anonymous",
+        f"staff_{request.user.is_staff}" if request.user.is_authenticated else "",
+        view_name or ""
+    ]
+    return "_".join(filter(None, key_parts))
+
+# CRITICAL: Make cache keys authentication-aware
+def make_cache_key(request, *args, **kwargs):
+    """Custom cache key that includes authentication state"""
+    from django.core.cache.utils import make_template_fragment_key
+    
+    cache_key = f"{request.path}_{request.user.pk if request.user.is_authenticated else 'anonymous'}"
+    if request.GET:
+        cache_key += f"_{hash(frozenset(request.GET.items()))}"
+    return cache_key
+
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Changed from cache-only
+#SESSION_CACHE_ALIAS = 'default'
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Cache settings - disable caching for authenticated users
+CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
+
+# Add cache control for specific views
+CACHE_CONTROL_SETTINGS = {
+    'home': {
+        'max_age': 0 if 'DEBUG' in globals() and DEBUG else 300,
+        'private': True,  # Don't cache in shared caches
+    }
+}
+
+# Add this to prevent caching of authentication-related pages
+CACHE_TIMEOUT = 0  # Disable caching for auth pages
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -146,11 +251,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# settings.py
-
 STATIC_URL = '/static/'
 
-STATICFILES_STORAGE = 'pipeline.storage.PipelineManifestStorage'
+# FIXED: Use standard static files storage for development
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+# Pipeline configuration (keep this if you want to use django-pipeline)
 PIPELINE = {
     'CSS_COMPRESSOR': 'pipeline.compressors.cssmin.CSSMinCompressor',
     'JS_COMPRESSOR': 'pipeline.compressors.jsmin.JSMinCompressor',
@@ -172,6 +278,13 @@ PIPELINE['STYLESHEETS'] = {
                 'css/page.css',
                 'css/tagged_posts.css',
                 'css/pagess.css',
+                'css/login.css',
+                'css/signup.css',
+                'css/unsubscribed.css',
+                'css/seo_admin.css',
+                'css/comment.css',
+                'css/blog-components.css',
+                'css/profile.css',
                 
         ),
         'output_filename': 'css/main.min.css',
@@ -184,21 +297,25 @@ PIPELINE['JAVASCRIPT'] = {
                 'js/base.js',    # base styles first
                 'js/blog.js',    # blog specific,
                 'js/home.js',
+                'js/comment.js',
+                'js/blog-components.js',
+                'js/service-worker.js',
+                'js/dashboard.js',
         ),
         'output_filename': 'js/main.min.js',
     },
 }
 
-
+# Make tags case-insensitive
+TAGGIT_CASE_INSENSITIVE = True
 
 # Include multiple static directories (one per app)
 STATICFILES_DIRS = [
     BASE_DIR / 'blogmain' / 'static',
 ]
 
- # Optional — for collectstatic in production
+ # Optional – for collectstatic in production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -206,7 +323,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR /'media'
+MEDIA_ROOT = BASE_DIR / 'media'
 CRISPY_TEMPLATE_PACK = 'Bootstrap4'
 
 SITE_ID = 2
@@ -220,14 +337,17 @@ LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_SIGNUP_REDIRECT_URL = "/"
+
+# Allauth settings
+#ACCOUNT_LOGIN_ON_GET = False  # Prevent GET requests from logging out
+#ACCOUNT_LOGOUT_ON_GET = False  # Allow GET logout (optional)
+
 
 # Optional: Improve signup behavior
 ACCOUNT_LOGIN_METHODS = {'email'}  # You can also use {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Asterisk * marks required fields
-
 
 # Allow users to log in with social accounts without extra signup
 SOCIALACCOUNT_LOGIN_ON_GET = True
@@ -236,19 +356,18 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 # Prevent duplicate email registrations
 ACCOUNT_UNIQUE_EMAIL = True
 
-# Automatically link social account if email matches existing user
-#ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
-#SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
-# settings.py
-
+#ACCOUNT_ADAPTER = 'accounts.adapters.MySocialAccountAdapter'
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.MySocialAccountAdapter"
 
+# Social account settings
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
 
+# Redirect settings
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 
 # Optional - Turn off email verification (only if you trust Google/Facebook)
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-
-
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -257,16 +376,69 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+# Email Configuration
+# For development - emails will print to console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production - uncomment and configure these:
+"""
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'bidemia02@gmail.com'
-EMAIL_HOST_PASSWORD = 'baci akdd twoo yqmr'
+EMAIL_HOST_PASSWORD = 'baci akdd twoo yqmr'  # Use app password, not your regular password
+"""
+
+DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
+SITE_NAME = 'Your Blog Name'
+SITE_URL = 'http://127.0.0.1:8000/'  # Change to your domain in production
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Add CSRF settings for better security
+CSRF_COOKIE_SECURE = False  # Set to True in production
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False  # Keep CSRF tokens in cookies
+
+# Email Configuration for Error Reporting (Production)
+ADMINS = [
+    ('Your Name', 'your-email@example.com'),
+]
+
+SERVER_EMAIL = 'noreply@yourdomain.com'
+EMAIL_SUBJECT_PREFIX = '[Blog Error] '
+
+# Image Optimization Settings (if using Pillow)
+THUMBNAIL_ENGINE = 'sorl.thumbnail.engines.pil_engine.Engine'
+THUMBNAIL_KEY_PREFIX = 'thumbnail-cache'
+THUMBNAIL_REDIS_URL = 'redis://localhost:6379/2'
+
+# Pagination Settings
+PAGINATE_BY = 10
+
+# Custom Settings for Blog App
+BLOG_SETTINGS = {
+    'FEATURED_POSTS_COUNT': 1,
+    'TRENDING_POSTS_COUNT': 2,
+    'EDITORS_PICKS_COUNT': 5,
+    'CATEGORY_POSTS_COUNT': 6,
+    'CACHE_TIMEOUT': 900,  # 15 minutes
+    'ENABLE_COMMENTS': True,
+    'ENABLE_SOCIAL_SHARING': True,
+}
 
 ACCOUNT_FORMS = {
     'signup': 'accounts.forms.CustomSignupForm',
-    'login': 'accounts.forms.CustomLoginForm',  # if you use a custom form
+    'login': 'accounts.forms.CustomLoginForm',
+}
+
+SOCIALACCOUNT_FORMS = {
+    'signup': 'accounts.forms.SocialSignupForm',
 }
 
 from django.contrib.messages import constants as messages
@@ -278,10 +450,6 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-
-
-
-
 
 customColorPalette = [
         {
@@ -355,4 +523,3 @@ CKEDITOR_5_CONFIGS = {
         },
     }
 }
-

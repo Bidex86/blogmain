@@ -1,0 +1,46 @@
+{% load comment_tags %}
+{% load profile_filters %}
+{% load crispy_forms_tags %}
+
+<section id="comments" class="comments-section">
+    <div class="comments-header">
+        <h3>Comments <span class="comment-count">({% comment_count_for object %})</span></h3>
+    </div>
+    
+    {% if user.is_authenticated %}
+        <!-- Comment Form -->
+        <div class="comment-form-container">
+            <div class="comment-form-header">
+                <img src="{{ user|get_avatar_url }}" alt="{{ user.username }}" class="avatar">
+                <h4>Leave a Comment</h4>
+            </div>
+            <form method="post" action="{% url 'comments:add_comment' %}" class="comment-form" id="main-comment-form">
+                {% csrf_token %}
+                <input type="hidden" name="content_type_id" value="{{ content_type_id }}">
+                <input type="hidden" name="object_id" value="{{ object.id }}">
+                
+                <div class="form-group">
+                    <textarea name="comment" 
+                              class="form-control comment-textarea" 
+                              rows="4" 
+                              placeholder="Share your thoughts..." 
+                              maxlength="1000" 
+                              required></textarea>
+                    <small class="character-count">0/1000</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Post Comment
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div class="login-prompt">
+            <p><a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-outline-primary">Login</a> to leave a comment.</p>
+        </div>
+    {% endif %}
+    <!-- Comments List -->
+    <div class="comments-container">
+        {% get_comments_for object paginate_by=10 %}
+    </div>
+</section>

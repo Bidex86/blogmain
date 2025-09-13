@@ -1,0 +1,27 @@
+<!-- comments/templates/comments/emails/reply_notification.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Reply to Your Comment</title>
+</head>
+<body>
+    <h2>Hi {{ parent_user.get_full_name|default:parent_user.username }}!</h2>
+    
+    <p><strong>{{ reply_user.get_full_name|default:reply_user.username }}</strong> replied to your comment:</p>
+    
+    <blockquote style="background: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
+        <p><strong>Your comment:</strong></p>
+        <p>{{ parent_comment.comment }}</p>
+        
+        <p><strong>Their reply:</strong></p>
+        <p>{{ comment.comment }}</p>
+    </blockquote>
+    
+    <p><a href="{{ object.get_absolute_url }}#comment-{{ comment.id }}">View the conversation</a></p>
+    
+    <hr>
+    <small>You're receiving this because you have email notifications enabled. 
+    <a href="{% url 'account_login' %}">Update your preferences</a></small>
+</body>
+</html>

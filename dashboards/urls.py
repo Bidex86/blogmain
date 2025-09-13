@@ -18,6 +18,10 @@ urlpatterns = [
     path('users/add', views.add_user, name='add_user'),
     path('users/edit/<int:pk>/', views.edit_user, name='edit_user'),
     path('users/delete/<int:pk>/', views.delete_user, name='delete_user'),
-    
+
+    # Regular delete URLs
+    #path('delete_post/<int:pk>/', views.delete_post, name='delete_post'),
+    #path('delete_category/<int:pk>/', views.delete_category, name='delete_category'),
+    #path('delete_user/<int:pk>/', views.delete_user, name='delete_user'),
 
 ]

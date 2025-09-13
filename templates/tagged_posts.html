@@ -7,16 +7,20 @@
 {% javascript 'main' %}
 {% load custom_filters %}
 
-{% block title %}Posts tagged "{{ tag.name }}" | My Blog  {% endblock %}
-{% block head %}
+{% block title %}Posts tagged "{{ tag.name }}" | My Blog {% endblock %}
 
+{% block head %}
+<style>
+    
+</style>
 {% endblock %}
+
 {% block content %}
 <div class="tagged-posts-container">
     <!-- Tag Title -->
     <h2 class="tag-title"><span>{{ tag.name }}</span></h2>
 
-    {% if posts %}
+    {% if page_obj %}
         <div class="tag-layout">
             <!-- LEFT SIDEBAR -->
             <aside class="sidebar left-sidebar">
@@ -24,7 +28,7 @@
                 {% for post in trending_posts %}
                     {% if post.slug %}
                         <div class="sidebar-item">
-                        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context="sidebar" loading="lazy" %}
+                            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context_name="sidebar" loading="lazy" %}
                             <div class="sidebar-text">
                                 <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
                                 <span class="post-date">{{ post.created_at|timesince }} ago</span>
@@ -38,9 +42,10 @@
 
             <!-- MAIN FEATURED POSTS -->
             <main class="main-content">
-                {% for post in posts %}
+                {% for post in page_obj %}
                     <article class="featured-post">
-                        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-featured-post" context="full" loading="lazy" %}
+                        {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-featured-post" context_name="full" loading="lazy" %}
+                        <h3>
                             <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a>
                         </h3>
                         <span class="post-meta">{{ post.created_at|timesince }} ago | {{ post.author }}</span>
@@ -55,7 +60,7 @@
                 {% for post in editors_picks %}
                     {% if post.slug %}
                         <div class="sidebar-item">
-                            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context="sidebar" loading="lazy" %}
+                            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context_name="sidebar" loading="lazy" %}
                             <div class="sidebar-text">
                                 <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
                                 <span class="post-date">{{ post.created_at|timesince }} ago</span>
@@ -67,6 +72,34 @@
                 {% endfor %}
             </aside>
         </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-container">
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a>
+                    {% else %}
+                        <span class="disabled">&laquo; Previous</span>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
+                    {% else %}
+                        <span class="disabled">Next &raquo;</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
     {% else %}
         <p class="no-posts">No posts found for this tag.</p>
     {% endif %}

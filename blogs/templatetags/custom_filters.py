@@ -9,7 +9,7 @@ register = template.Library()
 def strip_outer_p(value):
     return re.sub(r'^<p>(.*?)</p>$', r'\1', value.strip(), flags=re.DOTALL)
 
-register.filter
+@register.filter
 def exclude_ids(qs, id_list):
     try:
         ids = list(id_list or [])

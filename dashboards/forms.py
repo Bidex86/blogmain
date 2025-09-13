@@ -14,7 +14,7 @@ class CategoryForm(forms.ModelForm):
 class BlogPostForm(forms.ModelForm):
     class Meta:
         model = Blog
-        fields = ('title', 'category', 'seo_keywords', 'featured_image', 'short_description', 'blog_body', 'status', 'is_featured', 'is_editors_pick', 'tags')
+        fields = ('title', 'category', 'seo_keywords', 'focus_keyword', 'featured_image', 'short_description', 'blog_body', 'status', 'is_featured', 'is_editors_pick', 'tags')
         widgets = {
             'tags': forms.TextInput(attrs={
                 'class': 'tag-input',

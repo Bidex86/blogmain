@@ -756,4 +756,231 @@
     background: #a00000;
 }
 
+/* dashboard/static/dashboard/css/add_post.css */
 
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.post-preview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border-left: 4px solid #007bff;
+}
+
+.post-preview h3 {
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.post-preview p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.newsletter-preview {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+.newsletter-preview h4 {
+    margin-bottom: 10px;
+}
+
+.newsletter-preview .post-meta {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.newsletter-preview .read-more-btn {
+    display: inline-block;
+    background: #007bff;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.newsletter-preview .read-more-btn:hover {
+    background: #0056b3;
+}
+
+.newsletter-info {
+    color: #888;
+    font-size: 12px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.newsletter-info a {
+    color: #007bff;
+}
+
+.publish-button {
+    background: #007bff !important;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.publish-button:hover {
+    background-color: #0056b3 !important;
+    transform: translateY(-1px);
+}
+
+.publish-note {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+.current-post-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #007bff;
+}
+
+.post-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-published { background: #28a745; color: white; }
+.status-draft { background: #6c757d; color: white; }
+.status-review { background: #ffc107; color: #333; }
+
+.featured-badge, .editors-pick-badge {
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 11px;
+    background: #e74c3c;
+    color: white;
+}
+
+.current-tags {
+    margin-top: 10px;
+}
+
+.tag-badge {
+    background: #007bff;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-right: 5px;
+    display: inline-block;
+}
+
+.published-notice {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.post-links {
+    margin-top: 10px;
+}
+
+.view-live-btn, .view-category-btn {
+    display: inline-block;
+    margin-right: 10px;
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.save-note {
+    margin-top: 15px;
+    padding: 15px;
+    background: #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.save-note ul {
+    margin: 5px 0 0 20px;
+}

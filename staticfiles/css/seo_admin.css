@@ -1,0 +1,160 @@
+/* SEO Admin Styles - Place in: static/admin/css/seo_admin.css */
+
+.seo-score-indicator {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    line-height: 40px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.seo-score-high {
+    background-color: #28a745;
+}
+
+.seo-score-medium {
+    background-color: #ffc107;
+}
+
+.seo-score-low {
+    background-color: #dc3545;
+}
+
+/* SEO Fieldset Styling */
+.fieldset.seo-settings {
+    border: 2px solid #007cba;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.fieldset.seo-settings .module h2 {
+    background-color: #007cba;
+    color: white;
+    padding: 5px 10px;
+    margin: -15px -15px 15px -15px;
+}
+
+/* SEO Help Text */
+.help {
+    font-size: 11px;
+    color: #666;
+    display: block;
+    margin-top: 2px;
+}
+
+.help.seo-warning {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.help.seo-success {
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Character Count for Meta Fields */
+.meta-field-wrapper {
+    position: relative;
+}
+
+.char-count {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    font-size: 10px;
+    color: #666;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.char-count.over-limit {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.char-count.good-length {
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+/* Admin List View Enhancements */
+.admin-list-seo-score {
+    text-align: center;
+}
+
+.reading-time-badge {
+    background-color: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+}
+
+/* SEO Analysis Panel in Change Form */
+.seo-analysis-panel {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.seo-analysis-panel h3 {
+    margin-top: 0;
+    color: #007cba;
+}
+
+.seo-checklist {
+    list-style: none;
+    padding: 0;
+}
+
+.seo-checklist li {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.seo-checklist li:last-child {
+    border-bottom: none;
+}
+
+.seo-checklist .check {
+    color: #28a745;
+}
+
+.seo-checklist .warning {
+    color: #ffc107;
+}
+
+.seo-checklist .error {
+    color: #dc3545;
+}
+
+/* Custom Actions Styling */
+.actions {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.actions select {
+    margin-right: 10px;
+}
+
+.actions button {
+    background-color: #007cba;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.actions button:hover {
+    background-color: #005a87;
+}

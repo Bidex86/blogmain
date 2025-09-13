@@ -6,14 +6,14 @@
 {% javascript 'main' %}
 {% load custom_filters %}
 
-{% block meta_description %}Articles under {{ category.name }} - Explore our latest posts.{% endblock %}
-{% block meta_keywords %}{{ category.name }}, blog, news{% endblock %}
-{% block og_title %}{{ category.name }} Articles{% endblock %}
-{% block og_description %}Read the latest articles in {{ category.name }}.{% endblock %}
-{% block og_image %}{% if posts.0.featured_image %}{{ posts.0.featured_image.url }}{% endif %}{% endblock %}
-{% block twitter_title %}{{ category.name }} Articles{% endblock %}
-{% block twitter_description %}Latest articles in {{ category.name }}.{% endblock %}
-{% block twitter_image %}{% if posts.0.featured_image %}{{ posts.0.featured_image.url }}{% endif %}{% endblock %}
+{% block meta_description %}Articles under {{ category.category_name }} - Explore our latest posts.{% endblock %}
+{% block meta_keywords %}{{ category.category_name }}, blog, news{% endblock %}
+{% block og_title %}{{ category.category_name }} Articles{% endblock %}
+{% block og_description %}Read the latest articles in {{ category.category_name }}.{% endblock %}
+{% block og_image %}{% if page_obj.object_list.0.featured_image %}{{ page_obj.object_list.0.featured_image.url }}{% endif %}{% endblock %}
+{% block twitter_title %}{{ category.category_name }} Articles{% endblock %}
+{% block twitter_description %}Latest articles in {{ category.category_name }}.{% endblock %}
+{% block twitter_image %}{% if page_obj.object_list.0.featured_image %}{{ page_obj.object_list.0.featured_image.url }}{% endif %}{% endblock %}
 
 {% block head %}
 
@@ -21,26 +21,26 @@
 
 {% block content %}
 <section class="category-page">
-  <h2 class="category-title">{{ category }}</h2>
+  <h2 class="category-title">{{ category.category_name }}</h2>
 
-  <div class="category-layout">
-    <!-- Left Sidebar -->
-    <div class="category-sidebar">
-      {% for post in posts|slice:"1:3" %}
-        <div class="sidebar-item">
-          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar" context_name="sidebar" loading="lazy" %}
-          <div class="side-post">
-            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
-            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+  {% if page_obj.object_list %}
+    <div class="category-layout">
+      <!-- Left Sidebar -->
+      <div class="category-sidebar">
+        {% for post in page_obj.object_list|slice:"1:3" %}
+          <div class="sidebar-item">
+            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar" context_name="sidebar" loading="lazy" %}
+            <div class="side-post">
+              <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+              <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+            </div>
           </div>
-        </div>
-      {% endfor %}
-    </div>
+        {% endfor %}
+      </div>
 
-    <!-- Main Feature -->
-    <div class="main-feature">
-      {% if page_obj %}
-        {% with post=page_obj.0 %}
+      <!-- Main Feature -->
+      <div class="main-feature">
+        {% with post=page_obj.object_list.0 %}
           <div class="featured-article">
             <picture>
               {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-main-feature" context_name="full" loading="lazy" %}
@@ -52,73 +52,86 @@
             </div>
           </div>
         {% endwith %}
-      {% endif %}
-    </div>
+      </div>
 
-    <!-- Right Sidebar -->
-    <div class="category-sidebar-right">
-      {% for post in posts|slice:"3:5" %}
-        <div class="sidebar-item-right">
-          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-right" context_name="sidebar" loading="lazy" %}
-          <div class="side-post">
-            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
-            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+      <!-- Right Sidebar -->
+      <div class="category-sidebar-right">
+        {% for post in page_obj.object_list|slice:"3:5" %}
+          <div class="sidebar-item-right">
+            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-right" context_name="sidebar" loading="lazy" %}
+            <div class="side-post">
+              <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+              <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+            </div>
           </div>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <section>
-    <div class="sidebar editors-picks">
-      <h3>Editor's Picks</h3>
-      {% for post in editors_picks %}
-        <div class="editors-post">
-          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" loading="lazy" %}
-          <div class="side-post">
-            <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
-            <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
-          </div>
-        </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
     </div>
 
-    <div class="grid-3">
-      {% for post in posts|slice:"3:6" %}
-        <div class="article-card">
-          <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-grid" context_name="post" loading="lazy" %}
-            <h5>{{ post.title }}</h5>
-            <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
-            <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
-          </a>
+    <section>
+      <!-- Editor's Picks -->
+      {% if editors_picks %}
+        <div class="sidebar editors-picks">
+          <h3>Editor's Picks</h3>
+          {% for post in editors_picks %}
+            <div class="editors-post">
+              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" loading="lazy" %}
+              <div class="side-post">
+                <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+                <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+              </div>
+            </div>
+          {% endfor %}
         </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- Pagination -->
-  <nav aria-label="Page navigation" class="pagination-wrapper">
-    <ul class="pagination">
-      {% if page_obj.has_previous %}
-        <li><a href="?page=1">First</a></li>
-        <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
       {% endif %}
 
-      {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-          <li class="active"><span>{{ num }}</span></li>
-        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-          <li><a href="?page={{ num }}">{{ num }}</a></li>
+      <!-- Additional Posts Grid -->
+      {% if page_obj.object_list|length > 5 %}
+        <div class="grid-3">
+          {% for post in page_obj.object_list|slice:"5:" %}
+            <div class="article-card">
+              <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
+                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-grid" context_name="post" loading="lazy" %}
+                <h5>{{ post.title }}</h5>
+                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
+                <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="pagination-wrapper">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li><a href="?page=1">First</a></li>
+          <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
         {% endif %}
-      {% endfor %}
 
-      {% if page_obj.has_next %}
-        <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
-        <li><a href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
-      {% endif %}
-    </ul>
-  </nav>
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="active"><span>{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li><a href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
+          <li><a href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+
+  {% else %}
+    <!-- No Posts Message -->
+    <div class="no-posts-message">
+      <h3>No posts found in {{ category.category_name }}</h3>
+      <p>Check back later for new articles in this category.</p>
+    </div>
+  {% endif %}
 </section>
 {% endblock %}

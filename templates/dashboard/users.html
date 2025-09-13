@@ -23,7 +23,9 @@
                             <th>Active</th>
                             <th>Staff</th>
                             <th>Superuser</th>
-                            <th>Action</th>
+                            <th>Newsletter</th>  <!-- 👈 New column -->
+                            <th>Edit</th>
+                            <th>Delete</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,10 +63,24 @@
                                 {% endif %}
                             </td>
 
+                            <td class="status">
+                                {% if user.profile.newsletter_opt_in %}
+                                    <span class="status-badge active">✔</span>
+                                {% else %}
+                                    <span class="status-badge inactive">✖</span>
+                                {% endif %}
+                            </td>
+
                             <!-- Action Buttons -->
                             <td class="actions">
-                                <a href="{% url 'edit_user' user.id %}" class="btn-icon edit">Edit ✏</a>
-                                <a href="{% url 'delete_user' user.id %}" class="btn-icon delete"> Delete 🗑</a>
+                                <a href="{% url 'edit_user' user.id %}" class="btn-icon edit">✏️</a>
+                            </td>
+                            <td class="actions">
+                                <a href="{% url 'delete_user' user.id %}" 
+                                    class="btn-icon delete"
+                                    data-item-name="{{ user.username }}"
+                                    data-item-type="user">🗑️
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}

@@ -1,2 +1,29 @@
-<h2>{{ message }}</h2>
-<a href="{% url 'dashboard' %}">Back to Dashboard</a>
+{% extends "base.html" %}
+
+{% load static %}
+
+{% load pipeline %}
+
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+
+
+
+{% block content %}
+<div class="unsubscribe-container">
+    <div class="success-icon">✓</div>
+    <h2>Successfully Unsubscribed</h2>
+    <p>
+        You have been successfully unsubscribed from our newsletter. 
+        You will no longer receive marketing emails from us.
+    </p>
+    <p>
+        <small>You can always re-subscribe from your account settings if you change your mind.</small>
+    </p>
+    
+    <div class="btn-container">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+        <a href="{% url 'account_logout' %}" class="btn btn-secondary">Sign Out</a>
+    </div>
+</div>
+{% endblock %}

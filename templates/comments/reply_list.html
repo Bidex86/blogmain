@@ -1,0 +1,156 @@
+{% load comment_tags %}
+
+<!-- Template for AJAX-loaded replies -->
+<div class="replies-container">
+    {% if replies %}
+        {% for reply in replies %}
+            <div class="comment-item {{ reply.depth|depth_class }} reply-item" data-comment-id="{{ reply.id }}" id="comment-{{ reply.id }}">
+                <div class="comment-wrapper">
+                    <div class="comment-header">
+                        <img src="{{ reply.user.profile.get_avatar_url|default:'/static/images/default-avatar.png' }}" 
+                             alt="{{ reply.user.username }}" 
+                             class="comment-avatar">
+                        <div class="comment-meta">
+                            <strong class="comment-author">{{ reply.user.get_full_name|default:reply.user.username }}</strong>
+                            <time datetime="{{ reply.created_at|date:'c' }}" class="comment-time">
+                                {{ reply.created_at|timesince }} ago
+                            </time>
+                            {% if reply.is_edited %}
+                                <span class="edited-indicator" title="This comment has been edited">(edited)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="comment-content">
+                        {{ reply.comment|linebreaks }}
+                    </div>
+                    
+                    <div class="comment-actions">
+                        {% if user.is_authenticated %}
+                            <!-- Like button -->
+                            <form method="post" action="{% url 'comments:like_comment' reply.id %}" class="like-form inline-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-like {% if user in reply.likes.all %}liked{% endif %}">
+                                    <i class="fas fa-thumbs-up"></i> 
+                                    <span class="like-count">{{ reply.likes.count }}</span>
+                                </button>
+                            </form>
+                            
+                            <!-- Reply button (if not at max depth) -->
+                            {% if reply|can_reply_to:user %}
+                                <button class="reply-btn btn-action" data-comment-id="{{ reply.id }}">
+                                    <i class="fas fa-reply"></i> Reply
+                                </button>
+                            {% endif %}
+                            
+                            <!-- Edit button (only for comment author) -->
+                            {% if reply.can_be_edited_by:user %}
+                                <a href="{% url 'comments:edit_comment' reply.id %}" class="btn-action edit-btn">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            {% endif %}
+                            
+                            <!-- Delete button (for author or staff) -->
+                            {% if reply.user == user or user.is_staff %}
+                                <form method="post" action="{% url 'comments:delete_comment' reply.id %}" class="delete-form inline-form" onsubmit="return confirm('Are you sure you want to delete this reply?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-action delete-btn">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            <!-- Flag button (not for comment author) -->
+                            {% if reply.user != user %}
+                                <button class="flag-btn btn-action" data-comment-id="{{ reply.id }}">
+                                    <i class="fas fa-flag"></i> Flag
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Reply form (hidden by default) -->
+                    <div class="reply-form-container" id="reply-form-{{ reply.id }}" style="display: none;">
+                        <form method="post" action="{% url 'comments:add_comment' %}" class="reply-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="content_type_id" value="{{ content_type_id }}">
+                            <input type="hidden" name="object_id" value="{{ object.id }}">
+                            <input type="hidden" name="parent_id" value="{{ reply.id }}">
+                            
+                            <div class="reply-form-header">
+                                <img src="{{ user.profile.get_avatar_url|default:'/static/images/default-avatar.png' }}" 
+                                     alt="{{ user.username }}" 
+                                     class="reply-avatar">
+                                <span>Replying to {{ reply.user.get_full_name|default:reply.user.username }}</span>
+                            </div>
+                            
+                            <textarea name="comment" 
+                                      class="form-control reply-textarea" 
+                                      placeholder="Write your reply..." 
+                                      rows="3" 
+                                      maxlength="1000" 
+                                      required></textarea>
+                            
+                            <div class="reply-form-actions">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Post Reply
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary cancel-reply">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Flag form (hidden by default) -->
+                    <div class="flag-form-container" id="flag-form-{{ reply.id }}" style="display: none;">
+                        <form method="post" action="{% url 'comments:flag_comment' reply.id %}" class="flag-form">
+                            {% csrf_token %}
+                            <h5>Report this reply</h5>
+                            <div class="form-group">
+                                <label for="reason-{{ reply.id }}">Reason:</label>
+                                <select name="reason" id="reason-{{ reply.id }}" class="form-control" required>
+                                    <option value="spam">Spam</option>
+                                    <option value="abuse">Abusive Language</option>
+                                    <option value="harassment">Harassment</option>
+                                    <option value="inappropriate">Inappropriate Content</option>
+                                    <option value="off_topic">Off Topic</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="description-{{ reply.id }}">Additional details (optional):</label>
+                                <textarea name="description" 
+                                          id="description-{{ reply.id }}" 
+                                          class="form-control" 
+                                          rows="2" 
+                                          placeholder="Explain why you're reporting this reply..."></textarea>
+                            </div>
+                            <div class="flag-form-actions">
+                                <button type="submit" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-flag"></i> Report
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary cancel-flag">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Nested replies for this reply -->
+                {% if reply.children.approved.exists %}
+                    <div class="comment-replies">
+                        {% for nested_reply in reply.children.approved %}
+                            {% include 'comments/comment_item.html' with comment=nested_reply %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-replies">
+            <p class="text-muted">No replies yet.</p>
+        </div>
+    {% endif %}
+</div>

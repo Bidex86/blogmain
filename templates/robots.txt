@@ -1,6 +1,31 @@
 User-agent: *
-Disallow: 
+Allow: /
 
-/accounts/
+# Block admin and private areas
+Disallow: /admin/
+Disallow: /accounts/login/
+Disallow: /accounts/signup/
+Disallow: /dashboard/
+Disallow: /search?*
+Disallow: /*?page=*
 
+# Allow important pages
+Allow: /accounts/login/$
+Allow: /accounts/signup/$
+
+# Block duplicate content
+Disallow: /*?
+Disallow: /*#
+
+# Allow media files
+Allow: /media/
+
+# Crawl delay (optional - remove if not needed)
+# Crawl-delay: 1
+
+# Sitemap location
 Sitemap: https://yourdomain.com/sitemap.xml
+
+# Additional sitemaps (if you create them)
+# Sitemap: https://yourdomain.com/news-sitemap.xml
+# Sitemap: https://yourdomain.com/image-sitemap.xml

@@ -48,8 +48,14 @@
                                 ❌
                             {% endif %}
                         </td>
-                        <td><a href="{% url 'edit_post' post.id %}" class="icon-link">✏️</a></td>
-                        <td><a href="{% url 'delete_post' post.id %}" class="icon-link delete">🗑️</a></td>
+                        <td><a href="{% url 'edit_post' post.id %}" class="btn-icon edit">✏️</a></td>
+                        <td>
+                            <a href="{% url 'delete_post' post.id %}" 
+                               class="btn-icon delete"
+                               data-item-name="{{ post.title }}"
+                               data-item-type="post">🗑️
+                            </a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

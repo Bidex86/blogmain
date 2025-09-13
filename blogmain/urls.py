@@ -27,11 +27,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home' ),
     path('', include('blogs.urls')),
+    path('comments/', include('comments.urls')),
     path('pages/', include('pages.urls')),
     
      # Specific routes come FIRST
-    path("accounts/", include("accounts.urls")),
     path('accounts/', include('allauth.urls')),
+    path('', include("accounts.urls")),
     path('dashboard/', include('dashboards.urls')),
     path("ckeditor5/", include('django_ckeditor_5.urls')),
 
@@ -44,6 +45,8 @@ urlpatterns = [
     
     # Serve robots.txt
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
+    # Your existing URLs
+    path('sw.js', TemplateView.as_view(template_name='sw.js', content_type='application/javascript')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

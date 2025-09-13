@@ -1,23 +1,40 @@
 # accounts/views.py
 from django.shortcuts import redirect, render
-from allauth.socialaccount.adapter import get_adapter
-from allauth.account.utils import complete_signup
-from allauth.socialaccount.models import SocialLogin
 from django.contrib.auth.decorators import login_required
-from allauth.socialaccount import signals
-from allauth.utils import get_request_param
-from .forms import SocialSignupForm
 from .forms import NewsletterOptInForm
-from allauth.account.views import SignupView
-from .forms import CustomSignupForm
+from allauth.account.views import SignupView, LoginView
+from .forms import CustomSignupForm, ProfileForm
 from django.contrib import messages
-from allauth.socialaccount.helpers import complete_social_login
+from django.contrib.auth.models import User
 from allauth.socialaccount import providers
-from allauth.account.views import LoginView
-#from allauth.socialaccount.providers.google.views import oauth2_login
 from django.views import View
+from .models import Profile
+from django.contrib.auth import logout
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.conf import settings
 
-#google_login_direct = oauth2_login
+
+
+@login_required(login_url='/accounts/login/')
+def profile_settings(request):
+    """View for user to edit their profile settings"""
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile_settings')
+    else:
+        form = ProfileForm(instance=profile)
+    
+    return render(request, 'account/profile_settings.html', {
+        'form': form,
+        'profile': profile
+    })
+
 
 class CustomSignupView(SignupView):
     template_name = 'account/signup.html'
@@ -29,19 +46,27 @@ class CustomSignupView(SignupView):
         context['socialaccount_providers'] = provider_map
         return context
 
+    def form_valid(self, form):
+        """Override to ensure profile is created immediately"""
+        response = super().form_valid(form)
+        # Force profile creation
+        if self.user and not hasattr(self.user, 'profile'):
+            Profile.objects.get_or_create(user=self.user)
+        return response
 
-def toggle_theme(request):
-    theme = request.GET.get("theme", "light")
-    response = redirect(request.META.get("HTTP_REFERER", "/"))
-    response.set_cookie("theme", theme, max_age=60 * 60 * 24 * 365)  # 1 year
-    return response
+    def get_success_url(self):
+        """Override to redirect properly after signup"""
+        # Get the next URL from the request or default to home
+        next_url = self.request.GET.get('next') or self.request.POST.get('next')
+        if next_url:
+            return next_url
+        return getattr(settings, 'LOGIN_REDIRECT_URL', '/')
 
-
-
-from allauth.socialaccount import providers
 
 class CustomLoginView(LoginView):
     template_name = 'account/login.html'
+
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -51,40 +76,28 @@ class CustomLoginView(LoginView):
         }
         return context
 
-    
-def social_newsletter_optin(request):
-    try:
-        sociallogin = SocialLogin.deserialize(request.session.get('socialaccount_sociallogin'))
-    except Exception:
-        sociallogin = None
+    def get_success_url(self):
+        """Override to handle redirect properly after login"""
+        # Get the next URL from the request
+        next_url = self.request.GET.get('next') or self.request.POST.get('next')
+        if next_url and next_url != self.request.path:
+            return next_url
+        
+        # Default redirect based on user type
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return getattr(settings, 'LOGIN_REDIRECT_URL', '/dashboard/')
+        
+        return getattr(settings, 'LOGIN_REDIRECT_URL', '/')
 
-    if not sociallogin:
-        return redirect("account_signup")
 
-    if request.method == 'POST':
-        form = SocialSignupForm(request.POST)
-        if form.is_valid():
-            user = sociallogin.user
-            user.save()
+def toggle_theme(request):
+    theme = request.GET.get("theme", "light")
+    response = redirect(request.META.get("HTTP_REFERER", "/"))
+    response.set_cookie("theme", theme, max_age=60 * 60 * 24 * 365)  # 1 year
+    return response
 
-            # Ensure the profile exists and save the newsletter opt-in
-            if hasattr(user, 'profile'):
-                user.profile.newsletter_opt_in = form.cleaned_data['newsletter_opt_in']
-                user.profile.save()
 
-            # Properly complete the signup using allauth’s complete_signup
-            return complete_signup(
-                request,
-                user,
-                get_adapter(request).get_login_redirect_url(request),
-                sociallogin.get_redirect_url(request),
-            )
-    else:
-        form = SocialSignupForm()
-
-    return render(request, "account/social_optin.html", {"form": form})
-
-@login_required
+@login_required(login_url='/accounts/login/')
 def social_optin_view(request):
     user = request.user
 
@@ -93,21 +106,40 @@ def social_optin_view(request):
         if form.is_valid():
             newsletter_opt_in = form.cleaned_data.get("newsletter_opt_in", False)
 
-            if hasattr(user, 'profile'):
-                user.profile.newsletter_opt_in = newsletter_opt_in
-                user.profile.save()
+            profile, created = Profile.objects.get_or_create(user=user)
+            profile.newsletter_opt_in = newsletter_opt_in
+            profile.save()
+                
+            # Add success message
+            if newsletter_opt_in:
+                messages.success(request, "You have successfully subscribed to our newsletter!")
+            else:
+                messages.success(request, "You have been unsubscribed from our newsletter.")
+                
             return redirect('dashboard')  # or your desired redirect
     else:
-        form = NewsletterOptInForm()
+        # Initialize form with current user's newsletter preference
+        profile, created = Profile.objects.get_or_create(user=user)
+        form = NewsletterOptInForm(initial={'newsletter_opt_in': profile.newsletter_opt_in})
 
-    return render(request, 'accounts/social_optin.html', {'form': form})
+    return render(request, 'accounts/newsletter_settings.html', {'form': form})
 
-@login_required
+
+@login_required(login_url='/accounts/login/')
 def unsubscribe(request):
-    if hasattr(request.user, 'profile'):
-        request.user.profile.newsletter_opt_in = False
-        request.user.profile.save()
-    return redirect('account_logout')  # or redirect to a "Goodbye" page
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    profile.newsletter_opt_in = False
+    profile.save()
+    messages.success(request, "You have been successfully unsubscribed from our newsletter.")
+    return render(request, 'accounts/unsubscribe.html')
+
 
 def custom_logout_view(request):
-    messages.success(request, "You have signed out.")
+    """Custom logout view with proper message handling"""
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, "You have signed out successfully.")
+        return redirect('/')
+    
+    # If GET request, show confirmation page
+    return render(request, 'account/logout.html')

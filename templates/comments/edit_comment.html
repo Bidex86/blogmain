@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Comment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Edit Comment</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Show original comment context -->
+                    <div class="original-comment mb-3 p-3 bg-light rounded">
+                        <h6>Original Comment:</h6>
+                        <p class="mb-1">{{ comment.comment|linebreaks }}</p>
+                        <small class="text-muted">
+                            Posted {{ comment.created_at|timesince }} ago
+                            {% if comment.parent %}
+                                in reply to {{ comment.parent.user.username }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    <!-- Edit form -->
+                    <form method="post" class="edit-comment-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.comment.id_for_label }}">Your Comment:</label>
+                            {{ form.comment }}
+                            <small class="form-text text-muted">
+                                Maximum {{ form.comment.field.max_length|default:1000 }} characters.
+                                <span class="character-count">{{ form.comment.value|length|default:0 }}/{{ form.comment.field.max_length|default:1000 }}</span>
+                            </small>
+                        </div>
+                        
+                        <!-- Hidden fields -->
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <!-- Form errors -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <p>{{ field.label }}: {{ error }}</p>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="form-actions d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Comment
+                            </button>
+                            <a href="{{ object.get_absolute_url }}#comment-{{ comment.id }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Show context of what's being commented on -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>Context</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Commenting on:</strong> {{ object }}</p>
+                    {% if comment.parent %}
+                        <p><strong>In reply to:</strong> {{ comment.parent.user.username }}</p>
+                        <blockquote class="blockquote">
+                            <p class="mb-0">{{ comment.parent.comment|truncatewords:20 }}</p>
+                        </blockquote>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for edit form
+    const textarea = document.querySelector('#id_comment');
+    const counter = document.querySelector('.character-count');
+    
+    if (textarea && counter) {
+        textarea.addEventListener('input', function() {
+            const current = this.value.length;
+            const max = this.getAttribute('maxlength') || 1000;
+            counter.textContent = `${current}/${max}`;
+            
+            if (current > max * 0.9) {
+                counter.style.color = '#dc3545';
+            } else {
+                counter.style.color = '#6c757d';
+            }
+        });
+        
+        // Auto-resize
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    }
+});
+</script>
+{% endblock %}

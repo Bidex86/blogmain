@@ -129,6 +129,31 @@ h2 {
   text-decoration: underline;
 }
 
+.newsletter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.newsletter-group input[type="checkbox"] {
+    margin: 0;
+}
+
+.newsletter-group .form-text {
+    color: #666;
+    font-size: 12px;
+    display: block;
+    margin-top: 5px;
+    margin-left: 24px;
+}
+
+.social-disclaimer {
+    text-align: center;
+    color: #666;
+    margin-bottom: 15px;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .signup-container {

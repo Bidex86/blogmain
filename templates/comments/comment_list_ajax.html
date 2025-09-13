@@ -1,0 +1,6 @@
+{% load comment_tags %}
+
+<!-- AJAX-loaded comment list template -->
+{% for comment in comments %}
+    {% include 'comments/comment_item.html' %}
+{% endfor %}

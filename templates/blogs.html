@@ -1,73 +1,114 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load comment_tags %}
 {% load image_filters %}
 {% load auto_link %}
 {% load pipeline %}
+{% load custom_filters %}
+{% load crispy_forms_tags %}
+
 {% stylesheet 'main' %}
 {% javascript 'main' %}
-{% load custom_filters %}
 
-
-{% block meta_description %}{{ post.excerpt|truncatewords:25 }}{% endblock %}
-{% block meta_keywords %}{{ post.tags.all|join:", " }}{% endblock %}
-{% block og_title %}{{ post.title }}{% endblock %}
-{% block og_description %}{{ post.excerpt|truncatewords:25 }}{% endblock %}
-{% block og_image %}{{ post.featured_image.url }}{% endblock %}
-{% block twitter_title %}{{ post.title }}{% endblock %}
-{% block twitter_description %}{{ post.excerpt|truncatewords:25 }}{% endblock %}
-{% block twitter_image %}{{ post.featured_image.url }}{% endblock %}
+{% block meta_description %}{{ single_blog.short_description|striptags|truncatewords:25 }}{% endblock %}
+{% block meta_keywords %}{{ single_blog.tags.all|join:", " }}{% endblock %}
+{% block og_title %}{{ single_blog.title }}{% endblock %}
+{% block og_description %}{{ single_blog.short_description|striptags|truncatewords:25 }}{% endblock %}
+{% block og_image %}{% if single_blog.featured_image %}{{ single_blog.featured_image.url }}{% endif %}{% endblock %}
+{% block twitter_title %}{{ single_blog.title }}{% endblock %}
+{% block twitter_description %}{{ single_blog.short_description|striptags|truncatewords:25 }}{% endblock %}
+{% block twitter_image %}{% if single_blog.featured_image %}{{ single_blog.featured_image.url }}{% endif %}{% endblock %}
 
 {% block title %}{{ single_blog.title }} | My Blog{% endblock %}
-{% block head %}
 
+{% block head %}
 <link rel="canonical" href="{{ request.build_absolute_uri }}">
 <meta property="og:title" content="{{ single_blog.title }}">
-<meta property="og:description" content="{{ single_blog.short_description|truncatewords:20 }}">
+<meta property="og:description" content="{{ single_blog.short_description|striptags|truncatewords:20 }}">
+{% if single_blog.featured_image %}
 <meta property="og:image" content="{{ single_blog.featured_image.url }}">
+{% endif %}
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
 <meta property="og:type" content="article">
+<meta property="article:published_time" content="{{ single_blog.created_at|date:'c' }}">
+<meta property="article:modified_time" content="{{ single_blog.updated_at|date:'c' }}">
+<meta property="article:author" content="{{ single_blog.author.get_full_name|default:single_blog.author.username }}">
+<meta property="article:section" content="{{ single_blog.category.category_name }}">
+{% for tag in single_blog.tags.all %}
+<meta property="article:tag" content="{{ tag.name }}">
+{% endfor %}
 {% endblock %}
 
 {% block content %}
-{% load crispy_forms_tags %}
+
+<!-- Breadcrumbs -->
+{% if breadcrumbs %}
+<nav aria-label="breadcrumb" class="breadcrumb-nav">
+  <ol class="breadcrumb">
+    {% for crumb in breadcrumbs %}
+      {% if crumb.url %}
+        <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.name }}</a></li>
+      {% else %}
+        <li class="breadcrumb-item active" aria-current="page">{{ crumb.name }}</li>
+      {% endif %}
+    {% endfor %}
+  </ol>
+</nav>
+{% endif %}
+
 <div class="blog-container">
   <main class="blog-main">
     <article class="blog-post">
       <header class="blog-header">
-        <h1><a href="{{ blog.get_absolute_url }}">{{ single_blog.title }}</a></h1>
-        <p class="meta">Posted on {{ single_blog.created_at }} by {{ single_blog.author }}</p>
-        <a class="category-tag" href="{% url 'posts_by_category' single_blog.category.slug %}">{{ single_blog.category }}</a>
+        <h1>{{ single_blog.title }}</h1>
+        <div class="post-meta">
+          <span class="author">By {{ single_blog.author.get_full_name|default:single_blog.author.username }}</span>
+          <span class="date">{{ single_blog.created_at|date:"F d, Y" }}</span>
+          <span class="reading-time">{{ reading_time }} min read</span>
+          <span class="view-count">{{ single_blog.views }} views</span>
+          <span class="comment-count-meta">{% comment_count_for single_blog %} comments</span>
+        </div>
+        <a class="category-tag" href="{% url 'posts_by_category' single_blog.category.slug %}">{{ single_blog.category.category_name }}</a>
       </header>
 
       <div class="social-share">
         <h5>Share this post:</h5>
         <div class="share-buttons">
-          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="share-btn facebook">
-            <i class="fab fa-facebook-f"></i> Facebook
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" class="share-btn facebook" rel="noopener">
+            <i class="fab fa-facebook-f"></i>
           </a>
-          <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ single_blog.title }}" target="_blank" class="share-btn twitter">
-            <i class="fab fa-twitter"></i> Twitter
+          <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}&text={{ single_blog.title|urlencode }}" target="_blank" class="share-btn twitter" rel="noopener">
+            <i class="fab fa-twitter"></i>
           </a>
-          <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}" target="_blank" class="share-btn linkedin">
-            <i class="fab fa-linkedin-in"></i> LinkedIn
+          <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri|urlencode }}&title={{ single_blog.title|urlencode }}" target="_blank" class="share-btn linkedin" rel="noopener">
+            <i class="fab fa-linkedin-in"></i>
           </a>
-          <a href="https://api.whatsapp.com/send?text={{ single_blog.title }} - {{ request.build_absolute_uri }}" target="_blank" class="share-btn whatsapp">
-            <i class="fab fa-whatsapp"></i> WhatsApp
+          <a href="https://api.whatsapp.com/send?text={{ single_blog.title|urlencode }}%20-%20{{ request.build_absolute_uri|urlencode }}" target="_blank" class="share-btn whatsapp" rel="noopener">
+            <i class="fab fa-whatsapp"></i>
           </a>
         </div>
       </div>
 
+      {% if single_blog.featured_image %}
       <figure class="featured-image">
-        {% seo_responsive_image single_blog alt="Featured image for '{{ single_blog.title }}'" css_class="img-featured-post" context_name="full"%}
+        {% seo_responsive_image single_blog alt="Featured image for '{{ single_blog.title }}'" css_class="img-featured-post" context_name="full" %}
+        {% if single_blog.featured_image_caption %}
+          <figcaption>{{ single_blog.featured_image_caption }}</figcaption>
+        {% endif %}
       </figure>
-      
-     
+      {% endif %}
 
       {% auto_link_bundle single_blog.blog_body related_posts as auto %}
 
       <section class="blog-content">
-        <p>{{ single_blog.short_description|strip_outer_p|safe }}</p>
-        <p>{{ auto.content|strip_outer_p|safe }}</p>
+        {% if single_blog.short_description %}
+          <div class="post-excerpt">
+            {{ single_blog.short_description|strip_outer_p|safe }}
+          </div>
+        {% endif %}
+        <div class="post-body">
+          {{ auto.content|strip_outer_p|safe }}
+        </div>
       </section>
 
       {% if single_blog.tags.all %}
@@ -81,81 +122,87 @@
       </div>
       {% endif %}
 
-      <section class="comments">
-        <h5>Conversations <small>({{ comment_count }} comments)</small></h5>
-
-        <div class="add-comment">
-          {% if user.is_authenticated %}
-            <h6>Add a Comment</h6>
-            <form method="POST" class="add-comment-form">
-              {% csrf_token %}
-              <textarea name="comment" rows="2" placeholder="Write your comment..."></textarea>
-              <input type="hidden" name="parent_id" value="">
-              <button type="submit" class="btn-submit">Submit</button>
-            </form>
-          {% else %}
-            <p>Please <a href="{% url 'account_login' %}">login</a> to write a comment!</p>
-          {% endif %}
-        </div>
-
-        {% if comments %}
-          {% for comment in comments %}
-            {% include "include/comment_thread.html" with comment=comment depth=1 %}
+      <!-- Related Posts Section -->
+      {% if related_posts %}
+      <section class="related-posts">
+        <h3>Related Articles</h3>
+        <div class="related-grid">
+          {% for post in related_posts %}
+            <div class="related-card">
+              <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
+                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-related-post" context_name="post" %}
+                <h5>{{ post.title }}</h5>
+                <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+              </a>
+            </div>
           {% endfor %}
-        {% else %}
-          <p class="no-comments">No comments yet.</p>
-        {% endif %}
+        </div>
       </section>
+      {% endif %}
+
+      <!-- Comments Section - FIXED -->
+      {% include 'comments/comment_section.html' with object=single_blog content_type_id=content_type_id %}
+
     </article>
   </main>
 
   <aside class="blog-sidebar">
-    <section class="recent-articles">
+    <!-- Recent Articles -->
+    {% if posts %}
+    <section class="recent-articles-sidebar">
       <h3>Recent Articles</h3>
       {% for post in posts %}
         <div class="sidebar-article">
-          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-post" context_name="sidebar"%}
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-post" context_name="sidebar" %}
           <div class="article-info">
             <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h5>
-            <small>{{ post.created_at|timesince }} ago | {{ post.author }}</small>
+            <small class="post-meta">
+              {{ post.created_at|timesince }} ago
+              {% if post.author %} | {{ post.author.get_full_name|default:post.author.username }}{% endif %}
+            </small>
           </div>
         </div>
       {% endfor %}
     </section>
+    {% endif %}
+
+    <!-- Category Navigation -->
+    <section class="category-nav-sidebar">
+      <h3>Browse Categories</h3>
+      <ul class="category-list">
+        {% for cat in categories %}
+          <li>
+            <a href="{% url 'posts_by_category' cat.slug %}" 
+               {% if cat.slug == category.slug %}class="active"{% endif %}>
+              {{ cat.category_name }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <!-- Popular Posts -->
+    {% if trending_posts %}
+    <section class="popular-posts-sidebar">
+      <h3>Popular Posts</h3>
+      {% for post in trending_posts|slice:":3" %}
+        <div class="popular-article">
+          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-popular-post" context_name="sidebar" %}
+          <div class="article-info">
+            <h6><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h6>
+            <small>{{ post.views }} views</small>
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+    {% endif %}
   </aside>
 </div>
 
-
-
-
+{% endblock %}
 
 {% block jsonld %}
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": "{{ request.build_absolute_uri }}"
-  },
-  "headline": "{{ post.title|escapejs }}",
-  "description": "{{ post.short_description|striptags|truncatechars:150|escapejs }}",
-  "image": "{{ post.featured_image.url }}",
-  "author": {
-    "@type": "Person",
-    "name": "{{ post.author.get_full_name|default:post.author.username|escapejs }}"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "{{ site_settings.site_name|default:'My Blog' }}",
-    "logo": {
-      "@type": "ImageObject",
-      "url": "{{ site_settings.logo.url }}"
-    }
-  },
-  "datePublished": "{{ post.created_at|date:'c' }}",
-  "dateModified": "{{ post.updated_at|date:'c' }}"
-}
+{{ structured_data|safe }}
 </script>
-{% endblock %}
 {% endblock %}

@@ -1,0 +1,22 @@
+{{ site_name }} - New Post Published
+
+{{ post.title }}
+
+By: {{ post.author.get_full_name|default:post.author.username }}
+{% if post.created_at %}Published: {{ post.created_at|date:"F j, Y" }}{% endif %}
+{% if post.category %}Category: {{ post.category.category_name }}{% endif %}
+
+---
+
+{% if post.excerpt %}{{ post.excerpt|truncatewords:50 }}{% else %}{{ post.body|truncatewords:50|striptags }}{% endif %}
+
+Read the full post here: {{ site_url }}/post/{{ post.slug }}/
+
+---
+
+You're receiving this email because you subscribed to our newsletter.
+
+Manage your subscription: {{ site_url }}/newsletter-settings/
+Unsubscribe: {{ site_url }}/unsubscribe/
+
+© {% now "Y" %} {{ site_name }}. All rights reserved.
