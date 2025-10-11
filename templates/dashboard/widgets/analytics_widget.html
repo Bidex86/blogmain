@@ -1,0 +1,138 @@
+<!-- templates/dashboards/widgets/ad_analytics_widget.html -->
+{% if show_ad_analytics and ad_analytics %}
+<div class="analytics-widget card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-chart-bar text-primary"></i>
+            Advertisement Analytics
+        </h5>
+        <a href="/ads/analytics/" class="btn btn-sm btn-outline-primary">
+            View Details
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <!-- Quick Stats -->
+        <div class="row text-center mb-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number text-primary">{{ ad_analytics.active_ads_count }}</div>
+                    <div class="stat-label">Active Ads</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number text-info">{{ ad_analytics.total_impressions|floatformat:0 }}</div>
+                    <div class="stat-label">Impressions</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number text-success">{{ ad_analytics.total_clicks }}</div>
+                    <div class="stat-label">Clicks</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number text-warning">{{ ad_analytics.overall_ctr|floatformat:2 }}%</div>
+                    <div class="stat-label">CTR</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Performing Ads -->
+        {% if ad_analytics.recent_ads %}
+        <div class="top-ads">
+            <h6 class="mb-3">Top Performing Ads ({{ ad_analytics.days }} days)</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Position</th>
+                            <th>Impressions</th>
+                            <th>CTR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ad in ad_analytics.recent_ads %}
+                        <tr>
+                            <td>
+                                <strong>{{ ad.title|truncatechars:20 }}</strong>
+                                <br><small class="text-muted">{{ ad.ad_type|title }}</small>
+                            </td>
+                            <td>{{ ad.position.name|truncatechars:15 }}</td>
+                            <td>{{ ad.impressions|floatformat:0 }}</td>
+                            <td>
+                                <span class="badge badge-{% if ad.click_through_rate > 2 %}success{% elif ad.click_through_rate > 1 %}warning{% else %}secondary{% endif %}">
+                                    {{ ad.click_through_rate|floatformat:2 }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-3">
+            <i class="fas fa-chart-bar fa-2x text-muted mb-2"></i>
+            <p class="text-muted">No active advertisements found.</p>
+            <a href="/admin/ads/advertisement/add/" class="btn btn-primary btn-sm">
+                Create First Ad
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.analytics-widget .stat-item {
+    padding: 10px 0;
+}
+
+.analytics-widget .stat-number {
+    font-size: 1.5em;
+    font-weight: bold;
+    display: block;
+}
+
+.analytics-widget .stat-label {
+    font-size: 0.8em;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.analytics-widget .table th,
+.analytics-widget .table td {
+    padding: 0.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.analytics-widget .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.analytics-widget .card-header .btn-outline-primary {
+    color: white;
+    border-color: white;
+}
+
+.analytics-widget .card-header .btn-outline-primary:hover {
+    background: white;
+    color: #667eea;
+}
+
+@media (max-width: 768px) {
+    .analytics-widget .stat-number {
+        font-size: 1.2em;
+    }
+    
+    .analytics-widget .stat-label {
+        font-size: 0.7em;
+    }
+}
+</style>
+{% endif %}

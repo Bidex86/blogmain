@@ -6,6 +6,8 @@ from django.urls import reverse
 from taggit.managers import TaggableManager
 from django.core.exceptions import ValidationError
 import os
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 
@@ -60,7 +62,7 @@ class Blog(models.Model):
     
     # SEO Enhancement Fields
     meta_title = models.CharField(max_length=60, blank=True, help_text="SEO title (60 chars max)")
-    meta_description = models.TextField(max_length=160, blank=True, help_text="SEO description (160 chars max)")
+    meta_description = CKEditor5Field('Description', config_name='default')
     focus_keyword = models.CharField(max_length=100, blank=True, help_text="Main SEO keyword for this post")
     seo_keywords = models.CharField(max_length=255, blank=True, help_text="Comma-separated keywords for auto-linking")
     
@@ -79,6 +81,29 @@ class Blog(models.Model):
     views = models.IntegerField(default=0)  # Needed for trending logic
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Optional news-specific fields (add if you want enhanced news features)
+    is_breaking_news = models.BooleanField(default=False, help_text="Mark as breaking news")
+    news_priority = models.CharField(
+        max_length=20,
+        choices=[
+            ('low', 'Low'),
+            ('medium', 'Medium'),
+            ('high', 'High'),
+            ('breaking', 'Breaking')
+        ],
+        default='medium',
+        help_text="News priority level"
+    )
+    news_genre = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="News genre (e.g., PressRelease, Satire, Blog, Opinion)"
+    )
+    exclude_from_news = models.BooleanField(
+        default=False,
+        help_text="Exclude from Google News sitemap"
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -251,6 +276,67 @@ class SiteSetting(models.Model):
 
     def __str__(self):
         return "Site Settings"
+    
+class ContentAnalysis(models.Model):
+    post = models.OneToOneField(Blog, on_delete=models.CASCADE)
+    analysis_data = models.JSONField()
+    overall_score = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class LinkOpportunity(models.Model):
+    """Model to store internal linking opportunities"""
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    
+    anchor_text = models.CharField(max_length=255)
+    target_url = models.URLField()
+    target_post = models.ForeignKey('blogs.Blog', on_delete=models.CASCADE, null=True, blank=True)
+    context = models.TextField()  # Surrounding text
+    
+    relevance_score = models.FloatField(default=0.0)
+    implemented = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('content_type', 'object_id', 'anchor_text', 'target_url')
+
+class BrokenLink(models.Model):
+    """Model to track broken links"""
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    
+    url = models.URLField()
+    anchor_text = models.CharField(max_length=255)
+    status_code = models.IntegerField()
+    error_message = models.TextField(blank=True)
+    
+    first_detected = models.DateTimeField(auto_now_add=True)
+    last_checked = models.DateTimeField(auto_now=True)
+    fixed = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('content_type', 'object_id', 'url')
+
+class LinkPerformance(models.Model):
+    """Track link performance metrics"""
+    link_url = models.URLField()
+    source_post = models.ForeignKey('blogs.Blog', on_delete=models.CASCADE)
+    
+    clicks = models.IntegerField(default=0)
+    impressions = models.IntegerField(default=0)
+    ctr = models.FloatField(default=0.0)
+    
+    date = models.DateField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('link_url', 'source_post', 'date')
+
     
 
 #class Comment(models.Model):

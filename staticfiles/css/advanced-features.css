@@ -1,0 +1,135 @@
+/* PWA and Advanced Features Styles */
+.connection-status {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    text-align: center;
+    z-index: 1000;
+    font-weight: bold;
+}
+
+.connection-status.warning {
+    background-color: #ff9800;
+    color: white;
+}
+
+.connection-status.success {
+    background-color: #4caf50;
+    color: white;
+}
+
+#pwa-install-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 12px 24px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    transition: all 0.3s ease;
+}
+
+#pwa-install-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,123,255,0.4);
+}
+
+.voice-search-btn {
+    position: relative;
+    margin-left: 8px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voice-search-btn:hover {
+    background: #e9ecef;
+}
+
+.voice-search-btn.listening {
+    background: #dc3545;
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+.voice-search-btn.error {
+    background: #ffc107;
+    color: #212529;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.update-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #007bff;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    z-index: 1001;
+}
+
+.update-banner button {
+    margin: 0 8px;
+    padding: 4px 12px;
+    background: white;
+    color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.content-analysis-widget {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+}
+
+.score-indicator {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.score-excellent { background: #d4edda; color: #155724; }
+.score-good { background: #d1ecf1; color: #0c5460; }
+.score-fair { background: #fff3cd; color: #856404; }
+.score-poor { background: #f8d7da; color: #721c24; }
+
+.performance-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.performance-metric:last-child {
+    border-bottom: none;
+}
+
+.metric-value {
+    font-weight: bold;
+    color: #007bff;
+}

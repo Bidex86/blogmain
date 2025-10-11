@@ -20,6 +20,13 @@
             <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">
                 <span>🏠</span> Dashboard
             </a>
+
+            {% if user.is_staff %}
+            <a class="nav-link" href="/ads/analytics/">
+                <i class="fas fa-chart-bar"></i> Ad Analytics
+            </a>
+            {% endif %}
+
             <a href="{% url 'posts' %}" class="{% if request.path == '/dashboard/posts/' %}active{% endif %}">
                 <span>📝</span> Posts
             </a>
@@ -36,6 +43,12 @@
             <a href="{% url 'account_logout' %}">
                 <span>🚪</span> Logout
             </a>
+            <!-- Add Analytics Navigation -->
+            
+            <a class="nav-link" href="/admin/ads/advertisement/">
+                <i class="fas fa-ad"></i> Manage Ads
+            </a>
+            
         </nav>
     </aside>
 
@@ -66,5 +79,6 @@
             {% endblock %}
         </section>
     </main>
+    
 </div>
 {% endblock %}

@@ -34,14 +34,15 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'taggit',
     'blogs.apps.BlogConfig',
-    'comments.apps.CommentsConfig',  # Make sure this uses the proper app config
+    'comments.apps.CommentsConfig',
     'assignment',
     'crispy_forms',
     'dashboards',
     'pages',
     'crispy_bootstrap4',
     'django_ckeditor_5',
-    
+    'ads',  # Add this line - your new ads app
+    'notifications',
     'django.contrib.sitemaps',
     'pipeline',
     # allauth apps
@@ -61,7 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
-# MIDDLEWARE - Fixed (remove duplicates)
+# MIDDLEWARE - Cleaned up version
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -69,16 +70,42 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    # Add the admin no-cache middleware BEFORE cache middleware
+    # Custom middleware
+    'accounts.middleware.AuthAwareCacheMiddleware',
     'dashboards.middleware.AdminNoCacheMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',  # Add this for caching
-    'comments.middleware.CommentRateLimitMiddleware',  # Add comment rate limiting
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'comments.middleware.CommentRateLimitMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',  # Add this for caching
+    'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'blogmain.urls'
+
+# Push Notification Settings
+WEBPUSH_SETTINGS = {
+    'VAPID_PRIVATE_KEY': '''-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg9nUiT6+/UfqVNQCC
+cBK0Gjfu2W6DBstNpgNP4CbM1LShRANCAAREU7E7Ft0l4/Bj6PbqRMglUTXxmB6Z
+280JLBuKhypS5sl9lFtUD6K5dTzVOam3e31ccg63w1VFUCq/aEaKBDnp
+-----END PRIVATE KEY-----''',
+    'VAPID_PUBLIC_KEY': 'BERTsTsW3SXj8GPo9upEyCVRNfGYHpnbzQksG4qHKlLmyX2UW1QPorl1PNU5qbd7fVxyDrfDVUVQKr9oRooEOek',
+    'VAPID_ADMIN_EMAIL': 'bidemia02@gmail.com'
+}
+
+# Advertisement Settings
+ADS_SETTINGS = {
+    'ENABLE_VIEWABILITY_TRACKING': True,
+    'VIEWABILITY_THRESHOLD': 0.5,  # 50% of ad must be visible
+    'VIEWABILITY_DURATION': 1000,  # 1 second
+    'MAX_CLICKS_PER_IP_PER_DAY': 10,
+    'MAX_IMPRESSIONS_PER_IP_PER_HOUR': 100,
+    'ENABLE_AD_BLOCKER_DETECTION': True,
+    'DEFAULT_AD_EXPIRY_DAYS': 30,
+    'ANALYTICS_RETENTION_DAYS': 90,
+    'ENABLE_GEOGRAPHIC_TARGETING': False,
+    'ENABLE_DEVICE_TARGETING': False,
+}
 
 # COMMENT SYSTEM SETTINGS - Consolidated
 COMMENTS_SETTINGS = {
@@ -119,6 +146,8 @@ TEMPLATES = [
                 'blogs.context_processors.get_categories',
                 'blogs.context_processors.get_social_links',
                 'blogs.context_processors.site_settings',
+                'ads.context_processors.ad_settings',  # Add this line
+                'notifications.context_processors.webpush_settings',
             ],
         },
     },
@@ -126,7 +155,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'blogmain.wsgi.application'
 
-# FIXED: Single Database Configuration
+
+
+# Database Configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -135,43 +166,61 @@ DATABASES = {
     }
 }
 
-# FIXED: Single Cache Configuration - Use local memory for development
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+# Cache Configuration - Choose one based on your setup
+if DEBUG:
+    # Development: Use local memory cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'TIMEOUT': 300,  # 5 minutes default timeout
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
     }
-}
-
-# Alternative Redis Cache Configuration (commented out for now)
-# Uncomment and use this if you want Redis caching:
-"""
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            # Note: CLIENT_CLASS parameter removed as it's deprecated
+else:
+    # Production: Use Redis cache (requires Redis installation)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'OPTIONS': {
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+            },
+            'KEY_PREFIX': 'blog_cache',
+            'TIMEOUT': 300,
+            'VERSION': 1,
         },
-        'KEY_PREFIX': 'blog_cache',
-        'TIMEOUT': 900,  # 15 minutes
+        'sessions': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/2',
+            'TIMEOUT': 86400,  # 24 hours
+        },
+        'analytics': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/3',
+            'TIMEOUT': 3600,  # 1 hour
+        }
     }
-}
-"""
 
-# Cache settings for specific views
+# Cache middleware settings
 CACHE_MIDDLEWARE_ALIAS = 'default'
-CACHE_MIDDLEWARE_SECONDS = 100  # 1 minutes
+CACHE_MIDDLEWARE_SECONDS = 300 if not DEBUG else 0  # 5 minutes in production, disabled in debug
 CACHE_MIDDLEWARE_KEY_PREFIX = 'blog'
+CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
 
-# Add cache control for specific URLs
+# Cache control for specific URLs
 CACHE_CONTROL_URLS = {
-    '/dashboard/': {'max_age': 0, 'no_cache': True},  # Never cache admin
-    '/admin/': {'max_age': 0, 'no_cache': True},      # Never cache Django admin
+    '/dashboard/': {'max_age': 0, 'no_cache': True},
+    '/admin/': {'max_age': 0, 'no_cache': True},
+    '/accounts/': {'max_age': 0, 'no_cache': True},
 }
 
-# Add this function to create cache-aware templates
+# Cache utility functions
 def get_cache_key(request, view_name=None):
     """Generate cache keys that are user and permission aware"""
     key_parts = [
@@ -182,20 +231,15 @@ def get_cache_key(request, view_name=None):
     ]
     return "_".join(filter(None, key_parts))
 
-# CRITICAL: Make cache keys authentication-aware
 def make_cache_key(request, *args, **kwargs):
     """Custom cache key that includes authentication state"""
-    from django.core.cache.utils import make_template_fragment_key
-    
     cache_key = f"{request.path}_{request.user.pk if request.user.is_authenticated else 'anonymous'}"
     if request.GET:
         cache_key += f"_{hash(frozenset(request.GET.items()))}"
     return cache_key
 
-
 # Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Changed from cache-only
-#SESSION_CACHE_ALIAS = 'default'
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 86400  # 24 hours
@@ -203,23 +247,7 @@ SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
-# Cache settings - disable caching for authenticated users
-CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
-
-# Add cache control for specific views
-CACHE_CONTROL_SETTINGS = {
-    'home': {
-        'max_age': 0 if 'DEBUG' in globals() and DEBUG else 300,
-        'private': True,  # Don't cache in shared caches
-    }
-}
-
-# Add this to prevent caching of authentication-related pages
-CACHE_TIMEOUT = 0  # Disable caching for auth pages
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -235,46 +263,41 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = '/static/'
-
-# FIXED: Use standard static files storage for development
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
-# Pipeline configuration (keep this if you want to use django-pipeline)
-PIPELINE = {
-    'CSS_COMPRESSOR': 'pipeline.compressors.cssmin.CSSMinCompressor',
-    'JS_COMPRESSOR': 'pipeline.compressors.jsmin.JSMinCompressor',
-}
-
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'pipeline.finders.PipelineFinder',
+# Include multiple static directories (one per app)
+STATICFILES_DIRS = [
+    BASE_DIR / 'blogmain' / 'static',
 ]
 
-PIPELINE['STYLESHEETS'] = {
-    'main': {
-        'source_filenames': (
+# For collectstatic in production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Pipeline configuration in settings.py
+PIPELINE = {
+    'PIPELINE_ENABLED': not DEBUG,  # Enable compression in production only
+    'CSS_COMPRESSOR': 'pipeline.compressors.cssmin.CSSMinCompressor',
+    'JS_COMPRESSOR': 'pipeline.compressors.jsmin.JSMinCompressor',
+    'COMPILERS': [],
+    'STYLESHEETS': {
+        'main': {
+            'source_filenames': (
                 'css/base.css',
-                'css/dashboard.css',    # base styles first
-                'css/home.css',    # page layout
-                'css/blog.css',    # blog specific
+                'css/dashboard.css',
+                'css/home.css',
+                'css/blog.css',
                 'css/page.css',
                 'css/tagged_posts.css',
                 'css/pagess.css',
@@ -285,49 +308,61 @@ PIPELINE['STYLESHEETS'] = {
                 'css/comment.css',
                 'css/blog-components.css',
                 'css/profile.css',
-                
-        ),
-        'output_filename': 'css/main.min.css',
+                'css/advanced-features.css',
+                'css/advertisements.css',
+                'css/analytics-ads.css',
+                'css/notifications.css',  # ADD THIS
+            ),
+            'output_filename': 'css/main.min.css',
+            'extra_context': {
+                'media': 'screen,projection',
+            },
+        },
     },
-}
-
-PIPELINE['JAVASCRIPT'] = {
-    'main': {
-        'source_filenames': (
-                'js/base.js',    # base styles first
-                'js/blog.js',    # blog specific,
+    'JAVASCRIPT': {
+        'main': {
+            'source_filenames': (
+                'js/base.js',
+                'js/blog.js',
                 'js/home.js',
                 'js/comment.js',
                 'js/blog-components.js',
-                'js/service-worker.js',
                 'js/dashboard.js',
-        ),
-        'output_filename': 'js/main.min.js',
+                'js/analytics-manager.js',
+                'js/pwa-manager.js',
+                'js/voice-search.js',
+                'js/push-notifications.js',
+                'js/notification-manager.js',  # ADD THIS
+                
+            ),
+            'output_filename': 'js/main.min.js',
+        },
     },
 }
 
-# Make tags case-insensitive
-TAGGIT_CASE_INSENSITIVE = True
-
-# Include multiple static directories (one per app)
-STATICFILES_DIRS = [
-    BASE_DIR / 'blogmain' / 'static',
+# Make sure Pipeline finder is in STATICFILES_FINDERS
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'pipeline.finders.PipelineFinder',  # This is crucial
 ]
 
- # Optional – for collectstatic in production
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Add Pipeline storage for production
+if not DEBUG:
+    STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
+else:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Crispy Forms
 CRISPY_TEMPLATE_PACK = 'Bootstrap4'
 
+# Django Sites Framework
 SITE_ID = 2
 
+# Authentication
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # Default
     'allauth.account.auth_backends.AuthenticationBackend',  # allauth
@@ -337,37 +372,19 @@ LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+# Allauth settings
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_SIGNUP_REDIRECT_URL = "/"
-
-# Allauth settings
-#ACCOUNT_LOGIN_ON_GET = False  # Prevent GET requests from logging out
-#ACCOUNT_LOGOUT_ON_GET = False  # Allow GET logout (optional)
-
-
-# Optional: Improve signup behavior
-ACCOUNT_LOGIN_METHODS = {'email'}  # You can also use {'username', 'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Asterisk * marks required fields
-
-# Allow users to log in with social accounts without extra signup
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
-
-# Prevent duplicate email registrations
-ACCOUNT_UNIQUE_EMAIL = True
-
-#ACCOUNT_ADAPTER = 'accounts.adapters.MySocialAccountAdapter'
-SOCIALACCOUNT_ADAPTER = "accounts.adapters.MySocialAccountAdapter"
-
-# Social account settings
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
-
-# Redirect settings
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
-
-# Optional - Turn off email verification (only if you trust Google/Facebook)
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.MySocialAccountAdapter"
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -376,8 +393,16 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+ACCOUNT_FORMS = {
+    'signup': 'accounts.forms.CustomSignupForm',
+    'login': 'accounts.forms.CustomLoginForm',
+}
+
+SOCIALACCOUNT_FORMS = {
+    'signup': 'accounts.forms.SocialSignupForm',
+}
+
 # Email Configuration
-# For development - emails will print to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # For production - uncomment and configure these:
@@ -394,32 +419,43 @@ DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
 SITE_NAME = 'Your Blog Name'
 SITE_URL = 'http://127.0.0.1:8000/'  # Change to your domain in production
 
+# Email Configuration for Error Reporting (Production)
+ADMINS = [
+    ('Your Name', 'your-email@example.com'),
+]
+SERVER_EMAIL = 'noreply@yourdomain.com'
+EMAIL_SUBJECT_PREFIX = '[Blog Error] '
+
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Add CSRF settings for better security
-CSRF_COOKIE_SECURE = False  # Set to True in production
-CSRF_COOKIE_HTTPONLY = True
+# CSRF settings
+CSRF_COOKIE_SECURE = False  # Set to True only in production with HTTPS
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token if needed
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False  # Keep CSRF tokens in cookies
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
 
-# Email Configuration for Error Reporting (Production)
-ADMINS = [
-    ('Your Name', 'your-email@example.com'),
-]
-
-SERVER_EMAIL = 'noreply@yourdomain.com'
-EMAIL_SUBJECT_PREFIX = '[Blog Error] '
-
-# Image Optimization Settings (if using Pillow)
-THUMBNAIL_ENGINE = 'sorl.thumbnail.engines.pil_engine.Engine'
-THUMBNAIL_KEY_PREFIX = 'thumbnail-cache'
-THUMBNAIL_REDIS_URL = 'redis://localhost:6379/2'
+# Enhanced Security Settings for Production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
 
 # Pagination Settings
 PAGINATE_BY = 10
+
+# Tags
+TAGGIT_CASE_INSENSITIVE = True
 
 # Custom Settings for Blog App
 BLOG_SETTINGS = {
@@ -432,15 +468,92 @@ BLOG_SETTINGS = {
     'ENABLE_SOCIAL_SHARING': True,
 }
 
-ACCOUNT_FORMS = {
-    'signup': 'accounts.forms.CustomSignupForm',
-    'login': 'accounts.forms.CustomLoginForm',
+# PWA Configuration
+PWA_CONFIG = {
+    'name': 'Advanced Blog PWA',
+    'short_name': 'BlogPWA',
+    'description': 'Advanced blogging platform with AI features',
+    'theme_color': '#000000',
+    'background_color': '#ffffff',
+    'display': 'standalone',
+    'start_url': '/',
+    'icons': [
+        {
+            'src': '/static/images/icon-192x192.png',
+            'sizes': '192x192',
+            'type': 'image/png'
+        },
+        {
+            'src': '/static/images/icon-512x512.png',
+            'sizes': '512x512', 
+            'type': 'image/png'
+        }
+    ]
 }
 
-SOCIALACCOUNT_FORMS = {
-    'signup': 'accounts.forms.SocialSignupForm',
+# Analytics Configuration
+GA4_MEASUREMENT_ID = 'G-XXXXXXXXXX'  # Replace with your GA4 ID
+GA4_API_SECRET = 'your-api-secret'  # Replace with your API secret
+ANALYTICS_ENABLED = True
+
+# AI Content Intelligence
+AI_CONTENT_SETTINGS = {
+    'ENABLE_CONTENT_ANALYSIS': True,
+    'AUTO_ANALYZE_NEW_POSTS': True,
+    'MINIMUM_CONTENT_SCORE': 70,
+    'OPENAI_API_KEY': '',  # Add your OpenAI API key for advanced features
 }
 
+# Voice Search Configuration
+VOICE_SEARCH_SETTINGS = {
+    'ENABLE_VOICE_SEARCH': True,
+    'SUPPORTED_LANGUAGES': ['en-US', 'en-GB'],
+    'VOICE_TIMEOUT': 5000,  # milliseconds
+}
+
+# Link Building Configuration
+LINK_BUILDING_SETTINGS = {
+    'ENABLE_AUTO_LINKING': True,
+    'MAX_INTERNAL_LINKS_PER_POST': 10,
+    'MIN_RELEVANCE_SCORE': 0.3,
+    'CHECK_BROKEN_LINKS_INTERVAL': 24,  # hours
+}
+
+# Performance Settings
+PERFORMANCE_SETTINGS = {
+    'ENABLE_IMAGE_OPTIMIZATION': True,
+    'WEBP_QUALITY': 80,
+    'JPEG_QUALITY': 85,
+    'ENABLE_LAZY_LOADING': True,
+    'PRELOAD_CRITICAL_RESOURCES': True,
+}
+
+# Security Settings
+SECURITY_SETTINGS = {
+    'ENABLE_RATE_LIMITING': True,
+    'ENABLE_CSP': True,
+    'ENABLE_SECURITY_HEADERS': True,
+    'MAX_REQUEST_SIZE': 5 * 1024 * 1024,  # 5MB
+}
+
+# News Sitemap Settings
+NEWS_SITEMAP_SETTINGS = {
+    'ENABLE_NEWS_SITEMAP': True,
+    'NEWS_SITEMAP_DAYS_BACK': 2,
+    'NEWS_SITEMAP_MAX_ARTICLES': 1000,
+    'NEWS_SITEMAP_CACHE_TIMEOUT': 1800,  # 30 minutes
+    'NEWS_CATEGORIES': [
+        'News', 'Breaking News', 'Current Events', 'Technology News',
+        'Business News', 'Politics', 'Health News', 'Sports News',
+        'Entertainment News', 'Science News', 'Tech', 'Technology'
+    ],
+}
+
+# Image Optimization Settings
+THUMBNAIL_ENGINE = 'sorl.thumbnail.engines.pil_engine.engine'
+THUMBNAIL_KEY_PREFIX = 'thumbnail-cache'
+
+# Django Messages
 from django.contrib.messages import constants as messages
 
 MESSAGE_TAGS = {
@@ -451,32 +564,108 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
+# Enhanced Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/django.log',
+            'maxBytes': 1024*1024*10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'security': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/security.log',
+            'maxBytes': 1024*1024*10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'performance': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/performance.log',
+            'maxBytes': 1024*1024*10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.security': {
+            'handlers': ['security'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        'blogs.performance': {
+            'handlers': ['performance'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'blogs.ai_content': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },   
+}
+
+LOGGING['loggers']['ads'] = {
+    'handlers': ['file'],
+    'level': 'INFO',
+    'propagate': True,
+}
+
+# CKEditor 5 Configuration
 customColorPalette = [
-        {
-            'color': 'hsl(4, 90%, 58%)',
-            'label': 'Red'
-        },
-        {
-            'color': 'hsl(340, 82%, 52%)',
-            'label': 'Pink'
-        },
-        {
-            'color': 'hsl(291, 64%, 42%)',
-            'label': 'Purple'
-        },
-        {
-            'color': 'hsl(262, 52%, 47%)',
-            'label': 'Deep Purple'
-        },
-        {
-            'color': 'hsl(231, 48%, 48%)',
-            'label': 'Indigo'
-        },
-        {
-            'color': 'hsl(207, 90%, 54%)',
-            'label': 'Blue'
-        },
-    ]
+    {
+        'color': 'hsl(4, 90%, 58%)',
+        'label': 'Red'
+    },
+    {
+        'color': 'hsl(340, 82%, 52%)',
+        'label': 'Pink'
+    },
+    {
+        'color': 'hsl(291, 64%, 42%)',
+        'label': 'Purple'
+    },
+    {
+        'color': 'hsl(262, 52%, 47%)',
+        'label': 'Deep Purple'
+    },
+    {
+        'color': 'hsl(231, 48%, 48%)',
+        'label': 'Indigo'
+    },
+    {
+        'color': 'hsl(207, 90%, 54%)',
+        'label': 'Blue'
+    },
+]
 
 CKEDITOR_5_CONFIGS = {
     "default": {

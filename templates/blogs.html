@@ -6,6 +6,7 @@
 {% load pipeline %}
 {% load custom_filters %}
 {% load crispy_forms_tags %}
+{% load ad_tags %}
 
 {% stylesheet 'main' %}
 {% javascript 'main' %}
@@ -40,21 +41,6 @@
 {% endblock %}
 
 {% block content %}
-
-<!-- Breadcrumbs -->
-{% if breadcrumbs %}
-<nav aria-label="breadcrumb" class="breadcrumb-nav">
-  <ol class="breadcrumb">
-    {% for crumb in breadcrumbs %}
-      {% if crumb.url %}
-        <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.name }}</a></li>
-      {% else %}
-        <li class="breadcrumb-item active" aria-current="page">{{ crumb.name }}</li>
-      {% endif %}
-    {% endfor %}
-  </ol>
-</nav>
-{% endif %}
 
 <div class="blog-container">
   <main class="blog-main">
@@ -98,17 +84,64 @@
       </figure>
       {% endif %}
 
+      <!-- Process auto-link but separate the content from inline links -->
+      <!-- Replace the content section in your blogs.html -->
       {% auto_link_bundle single_blog.blog_body related_posts as auto %}
 
       <section class="blog-content">
-        {% if single_blog.short_description %}
-          <div class="post-excerpt">
-            {{ single_blog.short_description|strip_outer_p|safe }}
+          {% if single_blog.short_description %}
+              <div class="post-excerpt">
+                  {{ single_blog.short_description|strip_outer_p|safe }}
+              </div>
+          {% endif %}
+          
+          <div class="post-body">
+              <!-- Use auto.content for keyword auto-linking -->
+              {% with content=auto.content|strip_outer_p %}
+                  {% if content|length > 800 %}
+                      <!-- First part of content -->
+                      {{ content|slice:":800"|safe }}
+                      
+                      <!-- Inline Related Posts (properly styled) -->
+                      {% if auto.related_links %}
+                      <div class="related-inline">
+                          <h4>Read also</h4>
+                          <ul>
+                              {% for link in auto.related_links|slice:":4" %}
+                                  <li>
+                                      <a href="{{ link.url }}">{{ link.title }}</a>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      </div>
+                      {% endif %}
+                      
+                      <!-- In-content Ad -->
+                      <div class="ad-position-in-content">
+                          {% show_ad 'in-content' %}
+                      </div>
+                      
+                      <!-- Rest of content -->
+                      {{ content|slice:"800:"|safe }}
+                  {% else %}
+                      <!-- For shorter content -->
+                      {{ content|safe }}
+                      
+                      {% if auto.related_links %}
+                      <div class="related-inline">
+                          <h4>Read also</h4>
+                          <ul>
+                              {% for link in auto.related_links|slice:":4" %}
+                                  <li>
+                                      <a href="{{ link.url }}">{{ link.title }}</a>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      </div>
+                      {% endif %}
+                  {% endif %}
+              {% endwith %}
           </div>
-        {% endif %}
-        <div class="post-body">
-          {{ auto.content|strip_outer_p|safe }}
-        </div>
       </section>
 
       {% if single_blog.tags.all %}
@@ -122,7 +155,7 @@
       </div>
       {% endif %}
 
-      <!-- Related Posts Section -->
+      <!-- Original Related Posts Section -->
       {% if related_posts %}
       <section class="related-posts">
         <h3>Related Articles</h3>
@@ -140,8 +173,9 @@
       </section>
       {% endif %}
 
-      <!-- Comments Section - FIXED -->
-      {% include 'comments/comment_section.html' with object=single_blog content_type_id=content_type_id %}
+      <section id="comments" class="comments-section mt-5">
+          {% include 'comments/comment_section.html' with object=single_blog content_type_id=single_blog|content_type_id %}
+      </section>
 
     </article>
   </main>
@@ -166,6 +200,11 @@
     </section>
     {% endif %}
 
+    <!-- Add sidebar ad spaces -->
+    <div class="ad-position-sidebar">
+        {% show_ad 'sidebar-top' %}
+    </div>
+    
     <!-- Category Navigation -->
     <section class="category-nav-sidebar">
       <h3>Browse Categories</h3>
@@ -196,6 +235,10 @@
       {% endfor %}
     </section>
     {% endif %}
+
+    <div class="ad-position-sidebar">
+        {% show_ad 'sidebar-bottom' %}
+    </div>
   </aside>
 </div>
 

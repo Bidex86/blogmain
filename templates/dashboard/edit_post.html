@@ -53,6 +53,326 @@
             </div>
         {% endif %}
 
+        <!-- AI Content Analysis Section -->
+        {% if ai_analysis %}
+        <div class="ai-analysis-section">
+            <h3 class="analysis-title">
+                <span class="ai-icon">🤖</span>
+                AI Content Analysis
+                <span class="overall-score score-{{ ai_analysis.score|floatformat:0 }}">
+                    Score: {{ ai_analysis.score|floatformat:0 }}/100
+                </span>
+                <span class="analysis-timestamp">
+                    Last analyzed: {{ ai_analysis.timestamp|default:"Just now" }}
+                </span>
+            </h3>
+
+            <!-- Performance Comparison -->
+            {% if previous_analysis %}
+            <div class="performance-comparison">
+                <h4>Performance Changes</h4>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <label>Overall Score:</label>
+                        <span class="score-change {% if ai_analysis.score > previous_analysis.score %}improved{% elif ai_analysis.score < previous_analysis.score %}declined{% else %}same{% endif %}">
+                            {{ previous_analysis.score|floatformat:0 }} → {{ ai_analysis.score|floatformat:0 }}
+                            {% if ai_analysis.score > previous_analysis.score %}📈{% elif ai_analysis.score < previous_analysis.score %}📉{% else %}➡️{% endif %}
+                        </span>
+                    </div>
+                    <div class="comparison-item">
+                        <label>Readability:</label>
+                        <span class="score-change">
+                            {{ previous_analysis.readability.flesch_score|floatformat:0 }} → {{ ai_analysis.readability.flesch_score|floatformat:0 }}
+                        </span>
+                    </div>
+                    <div class="comparison-item">
+                        <label>Word Count:</label>
+                        <span class="score-change">
+                            {{ previous_analysis.readability.word_count }} → {{ ai_analysis.readability.word_count }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Stats -->
+            <div class="analysis-overview">
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.readability.word_count }}</div>
+                    <div class="stat-label">Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.readability.flesch_score|floatformat:0 }}</div>
+                    <div class="stat-label">Readability</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.seo.keyword_density }}%</div>
+                    <div class="stat-label">Keyword Density</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.readability.grade_level|floatformat:1 }}</div>
+                    <div class="stat-label">Grade Level</div>
+                </div>
+            </div>
+
+            <!-- Priority Issues Alert -->
+            {% if ai_analysis.suggestions %}
+                {% for suggestion in ai_analysis.suggestions %}
+                    {% if suggestion.priority == 'high' %}
+                        {% if forloop.first %}
+                        <div class="priority-alerts">
+                            <h4 class="alert-title">🚨 Priority Issues</h4>
+                        {% endif %}
+                        <div class="priority-alert">
+                            <strong>{{ suggestion.type|capfirst }}:</strong> {{ suggestion.message }}
+                        </div>
+                        {% if forloop.last %}
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            <!-- Detailed Analysis Tabs -->
+            <div class="analysis-tabs">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="suggestions">💡 Suggestions</button>
+                    <button class="tab-btn" data-tab="readability">📖 Readability</button>
+                    <button class="tab-btn" data-tab="seo">🔍 SEO</button>
+                    <button class="tab-btn" data-tab="engagement">❤️ Engagement</button>
+                    <button class="tab-btn" data-tab="semantic">🧠 Content Analysis</button>
+                </div>
+
+                <!-- Suggestions Tab -->
+                <div class="tab-content active" id="suggestions-tab">
+                    {% if ai_analysis.suggestions %}
+                        <div class="suggestions-filter">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="high">High Priority</button>
+                            <button class="filter-btn" data-filter="seo">SEO</button>
+                            <button class="filter-btn" data-filter="readability">Readability</button>
+                        </div>
+                        {% for suggestion in ai_analysis.suggestions %}
+                        <div class="suggestion-card priority-{{ suggestion.priority }}" data-type="{{ suggestion.type }}" data-priority="{{ suggestion.priority }}">
+                            <div class="suggestion-header">
+                                <span class="suggestion-type">{{ suggestion.type|capfirst }}</span>
+                                <span class="priority-badge priority-{{ suggestion.priority }}">{{ suggestion.priority|capfirst }}</span>
+                            </div>
+                            <div class="suggestion-message">{{ suggestion.message }}</div>
+                            <div class="suggestion-action">
+                                <strong>Action:</strong> {{ suggestion.action }}
+                            </div>
+                            <div class="suggestion-actions">
+                                <button class="btn-sm mark-resolved" data-suggestion-id="{{ forloop.counter }}">Mark Resolved</button>
+                                <button class="btn-sm ignore-suggestion" data-suggestion-id="{{ forloop.counter }}">Ignore</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-suggestions">
+                            <span class="success-icon">✅</span>
+                            <p>Excellent! No critical issues found. Your content is well-optimized.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Readability Tab -->
+                <div class="tab-content" id="readability-tab">
+                    <div class="readability-overview">
+                        <div class="readability-grade">
+                            <h4>Reading Level: {{ ai_analysis.readability.readability_grade }}</h4>
+                            <p class="grade-explanation">
+                                {% if ai_analysis.readability.flesch_score >= 90 %}
+                                    Very easy to read. Understood by an average 11-year-old student.
+                                {% elif ai_analysis.readability.flesch_score >= 80 %}
+                                    Easy to read. Conversational English for consumers.
+                                {% elif ai_analysis.readability.flesch_score >= 70 %}
+                                    Fairly easy to read. Plain English for most audiences.
+                                {% elif ai_analysis.readability.flesch_score >= 60 %}
+                                    Standard. Fairly difficult to read for most audiences.
+                                {% elif ai_analysis.readability.flesch_score >= 50 %}
+                                    Fairly difficult to read. Academic level content.
+                                {% else %}
+                                    Difficult to read. Graduate level content.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <label>Reading Ease:</label>
+                            <div class="score-bar">
+                                <div class="score-fill" 
+                                {% if ai_analysis.readability.flesch_score %}style="width: {{ ai_analysis.readability.flesch_score }}%"{% endif %}></div>
+                                <span class="score-text">{{ ai_analysis.readability.flesch_score|floatformat:1 }}</span>
+                            </div>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Average Sentence Length:</label>
+                            <span class="value {% if ai_analysis.readability.avg_sentence_length <= 20 %}good{% else %}warning{% endif %}">
+                                {{ ai_analysis.readability.avg_sentence_length|floatformat:1 }} words
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Total Sentences:</label>
+                            <span class="value">{{ ai_analysis.readability.sentence_count }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Grade Level:</label>
+                            <span class="value">{{ ai_analysis.readability.grade_level|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO Tab -->
+                <div class="tab-content" id="seo-tab">
+                    <div class="seo-checklist">
+                        <h4>SEO Checklist</h4>
+                        <div class="checklist-grid">
+                            <div class="checklist-item {% if ai_analysis.seo.title_optimization.optimal_length %}completed{% endif %}">
+                                <span class="check-icon">{% if ai_analysis.seo.title_optimization.optimal_length %}✓{% else %}✗{% endif %}</span>
+                                <span>Title length (30-60 chars): {{ ai_analysis.seo.title_optimization.length }}</span>
+                            </div>
+                            <div class="checklist-item {% if ai_analysis.seo.title_optimization.has_keyword %}completed{% endif %}">
+                                <span class="check-icon">{% if ai_analysis.seo.title_optimization.has_keyword %}✓{% else %}✗{% endif %}</span>
+                                <span>Keyword in title</span>
+                            </div>
+                            <div class="checklist-item {% if ai_analysis.seo.meta_description.optimal_length %}completed{% endif %}">
+                                <span class="check-icon">{% if ai_analysis.seo.meta_description.optimal_length %}✓{% else %}✗{% endif %}</span>
+                                <span>Meta description (120-160 chars): {{ ai_analysis.seo.meta_description.length }}</span>
+                            </div>
+                            <div class="checklist-item {% if ai_analysis.seo.keyword_in_first_paragraph %}completed{% endif %}">
+                                <span class="check-icon">{% if ai_analysis.seo.keyword_in_first_paragraph %}✓{% else %}✗{% endif %}</span>
+                                <span>Keyword in first paragraph</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <label>Keyword Density:</label>
+                            <span class="value {% if ai_analysis.seo.keyword_density >= 0.5 and ai_analysis.seo.keyword_density <= 2.5 %}good{% else %}warning{% endif %}">
+                                {{ ai_analysis.seo.keyword_density }}% 
+                                {% if ai_analysis.seo.keyword_density >= 0.5 and ai_analysis.seo.keyword_density <= 2.5 %}✓{% else %}⚠{% endif %}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Headers Structure:</label>
+                            <span class="value">
+                                H1: {{ ai_analysis.seo.headers.h1 }}, 
+                                H2: {{ ai_analysis.seo.headers.h2 }}, 
+                                H3: {{ ai_analysis.seo.headers.h3 }}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Internal Links:</label>
+                            <span class="value {% if ai_analysis.seo.internal_links >= 2 %}good{% else %}warning{% endif %}">
+                                {{ ai_analysis.seo.internal_links }}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>External Links:</label>
+                            <span class="value">{{ ai_analysis.seo.external_links }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engagement Tab -->
+                <div class="tab-content" id="engagement-tab">
+                    <div class="engagement-insights">
+                        <h4>Engagement Insights</h4>
+                        <div class="insights-grid">
+                            <div class="insight-card">
+                                <div class="insight-value">{{ ai_analysis.engagement.question_count }}</div>
+                                <div class="insight-label">Questions</div>
+                                <div class="insight-tip">Questions increase reader engagement</div>
+                            </div>
+                            <div class="insight-card">
+                                <div class="insight-value">{{ ai_analysis.engagement.emotional_word_count }}</div>
+                                <div class="insight-label">Emotional Words</div>
+                                <div class="insight-tip">Emotional language creates connection</div>
+                            </div>
+                            <div class="insight-card">
+                                <div class="insight-value">{{ ai_analysis.engagement.personal_pronouns }}</div>
+                                <div class="insight-label">Personal Pronouns</div>
+                                <div class="insight-tip">Makes content more conversational</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <label>Paragraphs:</label>
+                            <span class="value">{{ ai_analysis.engagement.paragraph_count }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Avg Paragraph Length:</label>
+                            <span class="value {% if ai_analysis.engagement.avg_paragraph_length <= 150 %}good{% else %}warning{% endif %}">
+                                {{ ai_analysis.engagement.avg_paragraph_length|floatformat:1 }} words
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Call to Action:</label>
+                            <span class="value {% if ai_analysis.engagement.call_to_action %}good{% else %}warning{% endif %}">
+                                {% if ai_analysis.engagement.call_to_action %}Found ✓{% else %}Not Found ⚠{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Semantic Analysis Tab -->
+                <div class="tab-content" id="semantic-tab">
+                    <div class="semantic-overview">
+                        <div class="content-depth">
+                            <h4>Content Depth Score: {{ ai_analysis.semantic.content_depth_score }}/100</h4>
+                            <div class="depth-bar">
+                                <div class="depth-fill" 
+                                {% if ai_analysis.semantic.content_depth_score %}style="width: {{ ai_analysis.semantic.content_depth_score }}%" {% endif %}></div>
+                            </div>
+                            <p class="depth-explanation">
+                                {% if ai_analysis.semantic.content_depth_score >= 80 %}
+                                    Excellent content depth with comprehensive coverage
+                                {% elif ai_analysis.semantic.content_depth_score >= 60 %}
+                                    Good content depth with adequate detail
+                                {% elif ai_analysis.semantic.content_depth_score >= 40 %}
+                                    Moderate content depth, consider expanding key points
+                                {% else %}
+                                    Low content depth, significantly expand the content
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="semantic-density">
+                            <label>Semantic Density:</label>
+                            <span class="value">{{ ai_analysis.semantic.semantic_density }}</span>
+                            <small>Higher values indicate more diverse vocabulary</small>
+                        </div>
+                    </div>
+
+                    {% if ai_analysis.semantic.key_phrases %}
+                    <div class="semantic-analysis">
+                        <h4>Key Phrases Detected:</h4>
+                        <div class="key-phrases">
+                            {% for phrase in ai_analysis.semantic.key_phrases %}
+                                <span class="key-phrase" title="Frequency and importance indicator">{{ phrase }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if ai_analysis.semantic.topics %}
+                    <div class="topics-analysis">
+                        <h4>Content Topics:</h4>
+                        <div class="topics">
+                            {% for topic in ai_analysis.semantic.topics %}
+                                <span class="topic">{{ topic }}</span>
+                            {% endfor %}
+                        </div>
+                        <small>Topics are automatically identified from your content</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Newsletter Preview Section (only if editing will send newsletter) -->
         {% if post and post.status != 'Published' %}
             <div class="post-preview">
@@ -99,10 +419,23 @@
         {% endif %}
 
         <div class="dashboard-form-wrapper">
-            <form action="{% url 'edit_post' post.id %}" method="POST" enctype="multipart/form-data" class="dashboard-form">
+            <form action="{% url 'edit_post' post.id %}" method="POST" enctype="multipart/form-data" class="dashboard-form" id="edit-form">
                 {% csrf_token %}
                 {{ form.media }}
                 {{ form|crispy }}
+                
+                <!-- AI Analysis Controls -->
+                <div class="ai-analysis-controls">
+                    <button type="button" id="reanalyze-content" class="btn-secondary">
+                        🔄 Re-analyze Content with AI
+                    </button>
+                    <button type="button" id="export-analysis" class="btn-outline">
+                        📊 Export Analysis Report
+                    </button>
+                    <p class="analysis-note">
+                        Re-analyze after making changes to see updated scores and suggestions.
+                    </p>
+                </div>
                 
                 <div class="form-actions" style="margin-top: 20px;">
                     <button type="submit" class="btn-primary save-button">
@@ -126,11 +459,629 @@
                         <li>✅ Changes will be saved immediately</li>
                         <li>📧 Newsletter only sent when first publishing (not on edits)</li>
                         <li>🔄 SEO and image optimization will run automatically</li>
+                        {% if ai_analysis %}
+                        <li>🤖 AI analysis will be updated with your changes</li>
+                        {% endif %}
                     </ul>
                 </div>
             </form>
         </div>
     </main>
 </div>
+
+<style>
+/* Include all the AI Analysis styles from add_post.html */
+.ai-analysis-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.analysis-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    color: #333;
+}
+
+.analysis-timestamp {
+    margin-left: auto;
+    font-size: 0.8em;
+    color: #666;
+    font-weight: normal;
+}
+
+/* Performance comparison styles */
+.performance-comparison {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.comparison-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.score-change.improved { color: #28a745; }
+.score-change.declined { color: #dc3545; }
+.score-change.same { color: #6c757d; }
+
+/* Priority alerts */
+.priority-alerts {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-left: 4px solid #fdcb6e;
+    border-radius: 0 6px 6px 0;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-title {
+    margin: 0 0 10px 0;
+    color: #856404;
+}
+
+.priority-alert {
+    color: #856404;
+    margin-bottom: 8px;
+}
+
+.priority-alert:last-child {
+    margin-bottom: 0;
+}
+
+/* Suggestions filter */
+.suggestions-filter {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    border: 1px solid #007bff;
+    background: white;
+    color: #007bff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* Suggestion actions */
+.suggestion-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    border: 1px solid #ccc;
+    background: white;
+    color: #333;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-sm:hover {
+    background: #f8f9fa;
+}
+
+/* SEO Checklist */
+.seo-checklist {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.checklist-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+.checklist-item.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.check-icon {
+    font-weight: bold;
+}
+
+/* Engagement insights */
+.engagement-insights {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.insight-card {
+    text-align: center;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.insight-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.insight-label {
+    font-weight: 500;
+    margin: 5px 0;
+}
+
+.insight-tip {
+    font-size: 0.8em;
+    color: #666;
+}
+
+/* Semantic analysis */
+.semantic-overview {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.content-depth h4 {
+    margin-bottom: 10px;
+}
+
+.depth-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.depth-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+    transition: width 0.3s ease;
+}
+
+.depth-explanation {
+    font-size: 0.9em;
+    color: #666;
+    margin: 10px 0 0;
+}
+
+.semantic-density {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* All other styles from add_post.html */
+.overall-score {
+    margin-left: auto;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.score-90, .score-100 { background: #28a745; }
+.score-80, .score-89 { background: #17a2b8; }
+.score-70, .score-79 { background: #ffc107; color: #000; }
+.score-60, .score-69 { background: #fd7e14; }
+.score-0, .score-59 { background: #dc3545; }
+
+.analysis-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.stat-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.analysis-tabs {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.tab-nav {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover, .tab-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.suggestion-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-left: 4px solid #007bff;
+    border-radius: 0 6px 6px 0;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.suggestion-card.priority-high {
+    border-left-color: #dc3545;
+}
+
+.suggestion-card.priority-medium {
+    border-left-color: #ffc107;
+}
+
+.suggestion-card.priority-low {
+    border-left-color: #28a745;
+}
+
+.suggestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.suggestion-type {
+    font-weight: bold;
+    color: #333;
+    text-transform: capitalize;
+}
+
+.priority-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white;
+}
+
+.priority-badge.priority-high { background: #dc3545; }
+.priority-badge.priority-medium { background: #ffc107; color: #000; }
+.priority-badge.priority-low { background: #28a745; }
+
+.suggestion-message {
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.suggestion-action {
+    font-size: 0.9em;
+    color: #333;
+}
+
+.no-suggestions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.success-icon {
+    font-size: 2em;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.analysis-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.analysis-item label {
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+.analysis-item .value {
+    font-weight: bold;
+}
+
+.analysis-item .value.good {
+    color: #28a745;
+}
+
+.analysis-item .value.warning {
+    color: #ffc107;
+}
+
+.score-bar {
+    position: relative;
+    background: #e9ecef;
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+    transition: width 0.3s ease;
+}
+
+.score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #333;
+}
+
+.key-phrases, .topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.key-phrase, .topic {
+    background: #007bff;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+.ai-analysis-controls {
+    margin: 20px 0;
+    padding: 15px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    border: 1px solid #bbdefb;
+}
+
+.analysis-note {
+    margin: 10px 0 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .analysis-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .tab-nav {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1 1 50%;
+    }
+    
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.dataset.tab;
+            
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            btn.classList.add('active');
+            document.getElementById(targetTab + '-tab').classList.add('active');
+        });
+    });
+
+    // Suggestions filtering
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const suggestionCards = document.querySelectorAll('.suggestion-card');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const filter = btn.dataset.filter;
+            
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            suggestionCards.forEach(card => {
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else if (filter === 'high' && card.dataset.priority === 'high') {
+                    card.style.display = 'block';
+                } else if (card.dataset.type === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Suggestion actions
+    document.querySelectorAll('.mark-resolved').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.suggestion-card');
+            card.style.opacity = '0.5';
+            this.textContent = 'Resolved';
+            this.disabled = true;
+        });
+    });
+
+    document.querySelectorAll('.ignore-suggestion').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.suggestion-card');
+            card.style.display = 'none';
+        });
+    });
+
+    // AI Analysis triggers
+    const reanalyzeBtn = document.getElementById('reanalyze-content');
+    if (reanalyzeBtn) {
+        reanalyzeBtn.addEventListener('click', function() {
+            this.textContent = 'Analyzing...';
+            this.disabled = true;
+            // Implement AJAX call to re-analyze content
+            setTimeout(() => {
+                this.textContent = '🔄 Re-analyze Content with AI';
+                this.disabled = false;
+                alert('Content re-analyzed! Page will refresh to show updated results.');
+            }, 2000);
+        });
+    }
+
+    const exportBtn = document.getElementById('export-analysis');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            // Implement analysis report export
+            alert('Analysis report export feature coming soon!');
+        });
+    }
+});
+
+document.getElementById('analyze-content').addEventListener('click', function() {
+    const formData = {
+        title: document.getElementById('id_title').value,
+        content: document.getElementById('id_blog_body').value,
+        focus_keyword: document.getElementById('id_focus_keyword').value,
+        meta_description: document.getElementById('id_meta_description').value
+    };
+    
+    this.textContent = 'Analyzing...';
+    this.disabled = true;
+    
+    fetch('/analyze-content/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.analysis) {
+            // Update the analysis section with new data
+            updateAnalysisDisplay(data.analysis);
+        }
+    })
+    .finally(() => {
+        this.textContent = 'Analyze Content with AI';
+        this.disabled = false;
+    });
+});
+</script>
 
 {% endblock %}

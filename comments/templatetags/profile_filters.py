@@ -1,4 +1,4 @@
-# Create a new file: comments/templatetags/profile_filters.py
+# comments/templatetags/profile_filters.py - Complete version
 from django import template
 
 register = template.Library()
@@ -31,3 +31,17 @@ def get_profile_attr(user, attr_name):
     except:
         pass
     return None
+
+@register.filter
+def user_initials(user):
+    """Get user initials for avatar placeholder"""
+    try:
+        if user.first_name and user.last_name:
+            return f"{user.first_name[0]}{user.last_name[0]}".upper()
+        elif user.first_name:
+            return user.first_name[0].upper()
+        elif user.username:
+            return user.username[0].upper()
+    except:
+        pass
+    return "U"

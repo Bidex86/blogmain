@@ -24,4 +24,8 @@ urlpatterns = [
     #path('delete_category/<int:pk>/', views.delete_category, name='delete_category'),
     #path('delete_user/<int:pk>/', views.delete_user, name='delete_user'),
 
+    # NEW: Add these for AI analysis
+    path('analyze-content/', views.analyze_content_ajax, name='analyze_content_ajax'),
+    path('analyze-post/<int:post_id>/', views.analyze_existing_post, name='analyze_existing_post'),
+
 ]

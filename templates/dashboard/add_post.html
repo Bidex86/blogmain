@@ -3,7 +3,6 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-
 {% block dashboard_content %}
 
 <div class="dashboard-container">
@@ -22,6 +21,195 @@
                     {{ message }}
                 </div>
             {% endfor %}
+        {% endif %}
+
+        <!-- AI Content Analysis Section -->
+        {% if ai_analysis %}
+        <div class="ai-analysis-section">
+            <h3 class="analysis-title">
+                <span class="ai-icon">🤖</span>
+                AI Content Analysis
+                <span class="overall-score score-{{ ai_analysis.score|floatformat:0 }}">
+                    Score: {{ ai_analysis.score|floatformat:0 }}/100
+                </span>
+            </h3>
+
+            <!-- Quick Stats -->
+            <div class="analysis-overview">
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.readability.word_count }}</div>
+                    <div class="stat-label">Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.readability.flesch_score|floatformat:0 }}</div>
+                    <div class="stat-label">Readability</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.seo.keyword_density }}%</div>
+                    <div class="stat-label">Keyword Density</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ ai_analysis.readability.grade_level|floatformat:1 }}</div>
+                    <div class="stat-label">Grade Level</div>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis Tabs -->
+            <div class="analysis-tabs">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="suggestions">💡 Suggestions</button>
+                    <button class="tab-btn" data-tab="readability">📖 Readability</button>
+                    <button class="tab-btn" data-tab="seo">🔍 SEO</button>
+                    <button class="tab-btn" data-tab="engagement">❤️ Engagement</button>
+                </div>
+
+                <!-- Suggestions Tab -->
+                <div class="tab-content active" id="suggestions-tab">
+                    {% if ai_analysis.suggestions %}
+                        {% for suggestion in ai_analysis.suggestions %}
+                        <div class="suggestion-card priority-{{ suggestion.priority }}">
+                            <div class="suggestion-header">
+                                <span class="suggestion-type">{{ suggestion.type|capfirst }}</span>
+                                <span class="priority-badge priority-{{ suggestion.priority }}">{{ suggestion.priority|capfirst }}</span>
+                            </div>
+                            <div class="suggestion-message">{{ suggestion.message }}</div>
+                            <div class="suggestion-action">
+                                <strong>Action:</strong> {{ suggestion.action }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-suggestions">
+                            <span class="success-icon">✅</span>
+                            <p>Great job! No critical issues found. Your content looks good to publish.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Readability Tab -->
+                <div class="tab-content" id="readability-tab">
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <label>Reading Ease:</label>
+                            <div class="score-bar">
+                                <div class="score-fill" 
+                                {% if ai_analysis.readability.flesch_score %}style="width: {{ ai_analysis.readability.flesch_score }}%" {% endif %}></div>
+                                <span class="score-text">{{ ai_analysis.readability.flesch_score|floatformat:1 }} ({{ ai_analysis.readability.readability_grade }})</span>
+                            </div>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Average Sentence Length:</label>
+                            <span class="value">{{ ai_analysis.readability.avg_sentence_length|floatformat:1 }} words</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Total Sentences:</label>
+                            <span class="value">{{ ai_analysis.readability.sentence_count }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Grade Level:</label>
+                            <span class="value">{{ ai_analysis.readability.grade_level|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO Tab -->
+                <div class="tab-content" id="seo-tab">
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <label>Title Length:</label>
+                            <span class="value {% if ai_analysis.seo.title_optimization.optimal_length %}good{% else %}warning{% endif %}">
+                                {{ ai_analysis.seo.title_optimization.length }} chars
+                                {% if ai_analysis.seo.title_optimization.optimal_length %}✓{% else %}⚠{% endif %}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Meta Description:</label>
+                            <span class="value {% if ai_analysis.seo.meta_description.optimal_length %}good{% else %}warning{% endif %}">
+                                {{ ai_analysis.seo.meta_description.length }} chars
+                                {% if ai_analysis.seo.meta_description.optimal_length %}✓{% else %}⚠{% endif %}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Keyword in Title:</label>
+                            <span class="value {% if ai_analysis.seo.title_optimization.has_keyword %}good{% else %}warning{% endif %}">
+                                {% if ai_analysis.seo.title_optimization.has_keyword %}Yes ✓{% else %}No ⚠{% endif %}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Headers:</label>
+                            <span class="value">
+                                H1: {{ ai_analysis.seo.headers.h1 }}, 
+                                H2: {{ ai_analysis.seo.headers.h2 }}, 
+                                H3: {{ ai_analysis.seo.headers.h3 }}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Internal Links:</label>
+                            <span class="value">{{ ai_analysis.seo.internal_links }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>External Links:</label>
+                            <span class="value">{{ ai_analysis.seo.external_links }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engagement Tab -->
+                <div class="tab-content" id="engagement-tab">
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <label>Questions:</label>
+                            <span class="value">{{ ai_analysis.engagement.question_count }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Emotional Words:</label>
+                            <span class="value">{{ ai_analysis.engagement.emotional_word_count }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Paragraphs:</label>
+                            <span class="value">{{ ai_analysis.engagement.paragraph_count }}</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Avg Paragraph Length:</label>
+                            <span class="value">{{ ai_analysis.engagement.avg_paragraph_length|floatformat:1 }} words</span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Call to Action:</label>
+                            <span class="value {% if ai_analysis.engagement.call_to_action %}good{% else %}warning{% endif %}">
+                                {% if ai_analysis.engagement.call_to_action %}Found ✓{% else %}Not Found ⚠{% endif %}
+                            </span>
+                        </div>
+                        <div class="analysis-item">
+                            <label>Personal Pronouns:</label>
+                            <span class="value">{{ ai_analysis.engagement.personal_pronouns }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Phrases & Topics -->
+            {% if ai_analysis.semantic.key_phrases %}
+            <div class="semantic-analysis">
+                <h4>Key Phrases Detected:</h4>
+                <div class="key-phrases">
+                    {% for phrase in ai_analysis.semantic.key_phrases %}
+                        <span class="key-phrase">{{ phrase }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if ai_analysis.semantic.topics %}
+            <div class="topics-analysis">
+                <h4>Content Topics:</h4>
+                <div class="topics">
+                    {% for topic in ai_analysis.semantic.topics %}
+                        <span class="topic">{{ topic }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
         {% endif %}
 
         <!-- Newsletter Preview Section -->
@@ -50,10 +238,20 @@
         {% endif %}
 
         <div class="dashboard-form-wrapper">
-            <form action="{% url 'add_post' %}" method="POST" enctype="multipart/form-data" class="dashboard-form">
+            <form action="{% url 'add_post' %}" method="POST" enctype="multipart/form-data" class="dashboard-form" id="post-form">
                 {% csrf_token %}
                 {{ form.media }}
                 {{ form|crispy }}
+                
+                <!-- AI Analysis Trigger -->
+                <div class="ai-analysis-controls">
+                    <button type="button" id="analyze-content" class="btn-secondary">
+                        🤖 Analyze Content with AI
+                    </button>
+                    <p class="analysis-note">
+                        Get real-time feedback on SEO, readability, and engagement before publishing.
+                    </p>
+                </div>
                 
                 <div style="margin-top: 20px;">
                     <button type="submit" class="btn-primary publish-button">
@@ -67,4 +265,478 @@
         </div>
     </main>
 </div>
+
+<style>
+/* AI Analysis Styles */
+.ai-analysis-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.analysis-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    color: #333;
+}
+
+.ai-icon {
+    font-size: 1.2em;
+}
+
+.overall-score {
+    margin-left: auto;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.score-90, .score-100 { background: #28a745; }
+.score-80, .score-89 { background: #17a2b8; }
+.score-70, .score-79 { background: #ffc107; color: #000; }
+.score-60, .score-69 { background: #fd7e14; }
+.score-0, .score-59 { background: #dc3545; }
+
+.analysis-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.stat-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.analysis-tabs {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.tab-nav {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover, .tab-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.suggestion-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-left: 4px solid #007bff;
+    border-radius: 0 6px 6px 0;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.suggestion-card.priority-high {
+    border-left-color: #dc3545;
+}
+
+.suggestion-card.priority-medium {
+    border-left-color: #ffc107;
+}
+
+.suggestion-card.priority-low {
+    border-left-color: #28a745;
+}
+
+.suggestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.suggestion-type {
+    font-weight: bold;
+    color: #333;
+    text-transform: capitalize;
+}
+
+.priority-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white;
+}
+
+.priority-badge.priority-high { background: #dc3545; }
+.priority-badge.priority-medium { background: #ffc107; color: #000; }
+.priority-badge.priority-low { background: #28a745; }
+
+.suggestion-message {
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.suggestion-action {
+    font-size: 0.9em;
+    color: #333;
+}
+
+.no-suggestions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.success-icon {
+    font-size: 2em;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.analysis-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.analysis-item label {
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+.analysis-item .value {
+    font-weight: bold;
+}
+
+.analysis-item .value.good {
+    color: #28a745;
+}
+
+.analysis-item .value.warning {
+    color: #ffc107;
+}
+
+.score-bar {
+    position: relative;
+    background: #e9ecef;
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+    transition: width 0.3s ease;
+}
+
+.score-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #333;
+}
+
+.semantic-analysis, .topics-analysis {
+    margin-top: 20px;
+}
+
+.key-phrases, .topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.key-phrase, .topic {
+    background: #007bff;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
+
+.ai-analysis-controls {
+    margin: 20px 0;
+    padding: 15px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    border: 1px solid #bbdefb;
+}
+
+.analysis-note {
+    margin: 10px 0 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .analysis-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .tab-nav {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1 1 50%;
+    }
+    
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.dataset.tab;
+            
+            // Remove active class from all tabs and contents
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            btn.classList.add('active');
+            document.getElementById(targetTab + '-tab').classList.add('active');
+        });
+    });
+
+    // AI Analysis trigger
+    // AI Analysis trigger
+const analyzeBtn = document.getElementById('analyze-content');
+if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', function() {
+        // Get form data
+        const formData = {
+            title: document.querySelector('[name="title"]').value || '',
+            content: document.querySelector('[name="blog_body"]').value || '',
+            focus_keyword: document.querySelector('[name="focus_keyword"]').value || '',
+            meta_description: document.querySelector('[name="meta_description"]').value || ''
+        };
+        
+        // Show loading state
+        const originalText = this.textContent;
+        this.textContent = 'Analyzing...';
+        this.disabled = true;
+        
+        // Make AJAX request
+        fetch('/dashboard/analyze-content/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.analysis) {
+                // Update the page with analysis results
+                updateAnalysisDisplay(data.analysis);
+                
+                // Show success message
+                alert('Content analyzed successfully! Check the analysis section above.');
+            } else {
+                alert('Analysis failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Analysis failed. Please try again.');
+        })
+        .finally(() => {
+            // Restore button
+            this.textContent = originalText;
+            this.disabled = false;
+        });
+    });
+}
+
+// Function to update the analysis display
+function updateAnalysisDisplay(analysis) {
+    // Create or update the analysis section
+    let analysisSection = document.querySelector('.ai-analysis-section');
+    
+    if (!analysisSection) {
+        // Create new analysis section if it doesn't exist
+        analysisSection = document.createElement('div');
+        analysisSection.className = 'ai-analysis-section';
+        
+        // Insert it before the form
+        const formWrapper = document.querySelector('.dashboard-form-wrapper');
+        formWrapper.parentNode.insertBefore(analysisSection, formWrapper);
+    }
+    
+    // Update the content with the analysis results
+    analysisSection.innerHTML = generateAnalysisHTML(analysis);
+    
+    // Scroll to the analysis section
+    analysisSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Function to generate HTML for analysis results
+function generateAnalysisHTML(analysis) {
+    return `
+        <h3 class="analysis-title">
+            <span class="ai-icon">🤖</span>
+            AI Content Analysis
+            <span class="overall-score score-${Math.floor(analysis.score / 10) * 10}">
+                Score: ${Math.round(analysis.score)}/100
+            </span>
+        </h3>
+
+        <div class="analysis-overview">
+            <div class="stat-card">
+                <div class="stat-value">${analysis.readability.word_count}</div>
+                <div class="stat-label">Words</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${Math.round(analysis.readability.flesch_score)}</div>
+                <div class="stat-label">Readability</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${analysis.seo.keyword_density}%</div>
+                <div class="stat-label">Keyword Density</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${analysis.readability.grade_level.toFixed(1)}</div>
+                <div class="stat-label">Grade Level</div>
+            </div>
+        </div>
+
+        ${generateSuggestionsHTML(analysis.suggestions)}
+    `;
+}
+
+// Function to generate suggestions HTML
+    function generateSuggestionsHTML(suggestions) {
+        if (!suggestions || suggestions.length === 0) {
+            return `
+                <div class="no-suggestions">
+                    <span class="success-icon">✅</span>
+                    <p>Great job! No critical issues found. Your content looks good to publish.</p>
+                </div>
+            `;
+        }
+        
+        let suggestionsHTML = '<div class="suggestions-section"><h4>Suggestions:</h4>';
+        
+        suggestions.forEach((suggestion, index) => {
+            suggestionsHTML += `
+                <div class="suggestion-card priority-${suggestion.priority}">
+                    <div class="suggestion-header">
+                        <span class="suggestion-type">${suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)}</span>
+                        <span class="priority-badge priority-${suggestion.priority}">${suggestion.priority.charAt(0).toUpperCase() + suggestion.priority.slice(1)}</span>
+                    </div>
+                    <div class="suggestion-message">${suggestion.message}</div>
+                    <div class="suggestion-action">
+                        <strong>Action:</strong> ${suggestion.action}
+                    </div>
+                </div>
+            `;
+        });
+        
+        suggestionsHTML += '</div>';
+        return suggestionsHTML;
+    }
+});
+
+document.getElementById('analyze-content').addEventListener('click', function() {
+    const formData = {
+        title: document.getElementById('id_title').value,
+        content: document.getElementById('id_blog_body').value,
+        focus_keyword: document.getElementById('id_focus_keyword').value,
+        meta_description: document.getElementById('id_meta_description').value
+    };
+    
+    this.textContent = 'Analyzing...';
+    this.disabled = true;
+    
+    fetch('/analyze-content/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.analysis) {
+            // Update the analysis section with new data
+            updateAnalysisDisplay(data.analysis);
+        }
+    })
+    .finally(() => {
+        this.textContent = 'Analyze Content with AI';
+        this.disabled = false;
+    });
+});
+</script>
+
 {% endblock %}

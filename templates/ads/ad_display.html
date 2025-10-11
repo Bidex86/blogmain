@@ -1,0 +1,101 @@
+<!-- templates/ads/ad_display.html -->
+{% load ad_tags %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+{% javascript 'main' %}
+
+
+{% if ad %}
+<div class="advertisement-container ad-position-{{ ad.position.slug }}" 
+     data-ad-id="{{ ad.pk }}" 
+     data-position="{{ ad.position.slug }}"
+     {% if ad.position.width and ad.position.height %}style="width: {{ ad.position.width }}px; height: {{ ad.position.height }}px;"{% endif %}>
+     
+    <div class="ad-content">
+        {% if ad.ad_type == 'image' and ad.image %}
+            {% if ad.click_url %}
+            <a href="{% ad_click_url ad %}" 
+               {% if ad.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
+               class="ad-link">
+            {% endif %}
+                <img src="{{ ad.image.url }}" 
+                     alt="{{ ad.alt_text|default:ad.title }}"
+                     class="ad-image"
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            {% if ad.click_url %}
+            </a>
+            {% endif %}
+            
+        {% elif ad.ad_type == 'html' %}
+            <div class="ad-html-content">
+                {{ ad|ad_content_safe }}
+                {% if ad.click_url %}
+                    <a href="{% ad_click_url ad %}" 
+                       {% if ad.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
+                       class="ad-overlay-link"></a>
+                {% endif %}
+            </div>
+            
+        {% elif ad.ad_type == 'script' %}
+            <div class="ad-script-content">
+                {{ ad|ad_content_safe }}
+            </div>
+            
+        {% elif ad.ad_type == 'video' and ad.html_content %}
+            <div class="ad-video-content">
+                {{ ad|ad_content_safe }}
+            </div>
+            
+        {% else %}
+            <!-- Fallback for missing content -->
+            <div class="ad-placeholder">
+                <p>Advertisement</p>
+                <small>{{ ad.title }}</small>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Small "Ad" label -->
+    <div class="ad-label">Ad</div>
+    
+    <!-- Impression tracking pixel -->
+    {% ad_impression_pixel ad %}
+</div>
+
+<script>
+// Track impression via JavaScript (more reliable than pixel)
+(function() {
+    const adContainer = document.querySelector('[data-ad-id="{{ ad.pk }}"]');
+    if (adContainer) {
+        // Use Intersection Observer for viewability tracking
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    // Ad is at least 50% visible
+                    trackImpression('{{ ad.pk }}');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.5,
+            rootMargin: '0px 0px -50px 0px'
+        });
+        
+        observer.observe(adContainer);
+    }
+    
+    function trackImpression(adId) {
+        fetch('/ads/track-impression-ajax/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ad_id: adId,
+                page_url: window.location.href
+            })
+        }).catch(e => console.log('Impression tracking failed:', e));
+    }
+})();
+</script>
+{% endif %}

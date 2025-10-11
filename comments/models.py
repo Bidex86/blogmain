@@ -27,12 +27,9 @@ class CommentManager(models.Manager):
         return self.filter(is_approved=False, is_flagged=False)
 
 class Comment(models.Model):
-    """
-    Generic comment model that can attach to any Django model
-    Supports nested replies with depth tracking
-    """
+    """Generic comment model that can attach to any Django model"""
     
-    # Generic relationship - THIS IS THE KEY!
+    # Generic relationship
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -68,7 +65,6 @@ class Comment(models.Model):
     class Meta:
         ordering = ['created_at']
         indexes = [
-            # Optimize queries for getting comments on objects
             models.Index(fields=['content_type', 'object_id', 'parent']),
             models.Index(fields=['user', 'created_at']),
             models.Index(fields=['is_approved', 'created_at']),
@@ -80,9 +76,12 @@ class Comment(models.Model):
     def save(self, *args, **kwargs):
         """Custom save method to track edits"""
         if self.pk:  # If updating existing comment
-            old_comment = Comment.objects.get(pk=self.pk)
-            if old_comment.comment != self.comment:
-                self.is_edited = True
+            try:
+                old_comment = Comment.objects.get(pk=self.pk)
+                if old_comment.comment != self.comment:
+                    self.is_edited = True
+            except Comment.DoesNotExist:
+                pass
         super().save(*args, **kwargs)
     
     @property
@@ -120,7 +119,8 @@ class Comment(models.Model):
             deadline = self.created_at + timedelta(minutes=edit_limit)
             return timezone.now() <= deadline
         return True
-    
+
+# Keep other models (CommentFlag, CommentLike) as they are...
 class CommentFlag(models.Model):
     """Model for flagging inappropriate comments"""
     REASON_CHOICES = [
@@ -140,21 +140,19 @@ class CommentFlag(models.Model):
     is_reviewed = models.BooleanField(default=False)
     
     class Meta:
-        unique_together = ['comment', 'user']  # Prevent duplicate flags from same user
+        unique_together = ['comment', 'user']
     
     def __str__(self):
         return f'Flag on comment {self.comment.id} by {self.user.username}'
 
 class CommentLike(models.Model):
-    """Model for liking/upvoting comments (optional feature)"""
+    """Model for liking/upvoting comments"""
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='likes')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)
     
     class Meta:
-        unique_together = ['comment', 'user']  # Prevent duplicate likes
+        unique_together = ['comment', 'user']
     
     def __str__(self):
         return f'{self.user.username} likes comment {self.comment.id}'
-
-# Remove the UserProfile class entirely to avoid conflicts with accounts.Profile

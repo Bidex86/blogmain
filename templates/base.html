@@ -1,9 +1,11 @@
 {% load static %}
 {% load pipeline %}
 {% stylesheet 'main' %}
+{% load ad_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
+<!-- CLEANED HEAD SECTION - Replace your existing head section with this -->
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -45,6 +47,11 @@
   <meta property="twitter:description" content="{% block twitter_description %}{{ site_settings.meta_description|default:'Latest blog updates' }}{% endblock %}">
   <meta property="twitter:image" content="{% block twitter_image %}{% if site_settings.site_logo %}{{ request.scheme }}://{{ request.get_host }}{{ site_settings.site_logo.url }}{% endif %}{% endblock %}">
 
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <link rel="apple-touch-icon" href="{% static 'images/icon-192x192.png' %}">
+
   <!-- Favicon -->
   <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
   <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
@@ -56,23 +63,60 @@
   <link rel="preconnect" href="https://getbootstrap.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+  <!-- DNS Prefetch -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="dns-prefetch" href="//www.google-analytics.com">
   
   <!-- Core Styles -->
   <link href="https://getbootstrap.com/docs/4.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <!-- Preload Critical Resources (only if files exist) -->
+  {% comment %}
+  <!--<link rel="preload" href="{% static 'css/main.min.css' %}" as="style">-->
+  <!--<link rel="preload" href="{% static 'js/main.min.js' %}" as="script">-->
+  <link rel="preload" href="{% static 'fonts/main-font.woff2' %}" as="font" type="font/woff2" crossorigin>
+  {% endcomment %}
+
+  <!-- Pipeline CSS -->
+  {% load static %}
+  {% load pipeline %}
+  {% stylesheet 'main' %}
   
-  
-  <!-- Google Analytics -->
+
+  <!-- Enhanced Meta Tags with AI Content (only if content analysis exists) -->
+  {% if content_analysis %}
+    <meta name="content-score" content="{{ content_analysis.score }}">
+    <meta name="readability-grade" content="{{ content_analysis.readability.readability_grade }}">
+  {% endif %}
+
+  <!-- Voice Search Schema (only if voice analysis exists) -->
+  {% if voice_analysis and voice_analysis.schema_markup.faq %}
+    <script type="application/ld+json">
+    {{ voice_analysis.schema_markup.faq|safe }}
+    </script>
+  {% endif %}
+
+  <!-- Google Analytics - SINGLE VERSION -->
   {% if site_settings.google_analytics_id %}
-  <script async src="https://www.googletagmanager.com/gtag/js?id={{ site_settings.google_analytics_id }}"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '{{ site_settings.google_analytics_id }}');
-  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site_settings.google_analytics_id }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ site_settings.google_analytics_id }}');
+    </script>
+  {% elif analytics_enabled and GA4_MEASUREMENT_ID %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA4_MEASUREMENT_ID }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ GA4_MEASUREMENT_ID }}');
+    </script>
   {% endif %}
   
   <!-- Google Search Console Verification -->
@@ -83,7 +127,6 @@
   <!-- Page-specific head content -->
   {% block head %}{% endblock %}
 </head>
-
 <body class="{% if request.COOKIES.theme == 'dark' %}dark-mode{% else %}light-mode{% endif %}">
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
@@ -147,6 +190,39 @@
                         <a href="{% url 'account_login' %}" class="nav-link">Login</a>
                         <a href="{% url 'account_signup' %}" class="nav-link">Register</a>
                     {% else %}
+                    <!-- Notification Bell -->
+                        <div class="notification-bell-container">
+                            <button id="notificationBellBtn" class="notification-bell-btn" title="Notifications">
+                                <i class="bi bi-bell"></i>
+                                <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+                                <span id="notificationStatus" class="notification-status-dot"></span>
+                            </button>
+                            
+                            <!-- Notification Dropdown -->
+                            <div id="notificationDropdown" class="notification-dropdown" style="display: none;">
+                                <div class="notification-header">
+                                    <h4>Notifications</h4>
+                                    <button id="markAllReadBtn" class="mark-all-read-btn">Mark all as read</button>
+                                </div>
+                                
+                                <div class="notification-controls">
+                                    <button id="toggleNotificationsBtn" class="toggle-notifications-btn">
+                                        <span id="notificationToggleText">Enable Notifications</span>
+                                    </button>
+                                    <a href="{% url 'notification_preferences' %}" class="notification-settings-link">
+                                        <i class="bi bi-gear"></i> Settings
+                                    </a>
+                                </div>
+                                
+                                <div id="notificationList" class="notification-list">
+                                    <div class="notification-loading">Loading notifications...</div>
+                                </div>
+                                
+                                <div class="notification-footer">
+                                    <a href="{% url 'notification_history' %}">View All Notifications</a>
+                                </div>
+                            </div>
+                        </div>
                         <!-- User Profile Section -->
                         <div class="user-profile">
                             <div class="profile-dropdown">
@@ -198,6 +274,11 @@
                     <span id="navbar-icon">&#9776;</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Header Ad Space -->
+        <div class="ad-position-header">
+            {% show_ad 'header-banner' %}
         </div>
 
         <!-- Mobile Dropdown Overlay -->
@@ -265,6 +346,27 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Sidebar with Ads -->
+    <aside class="sidebar">
+        <!-- Sidebar Ad Space -->
+        <div class="ad-position-sidebar">
+            {% show_ad 'sidebar-top' %}
+        </div>
+        
+        <!-- Other sidebar content -->
+        {% block sidebar %}{% endblock %}
+        
+        <!-- Another Sidebar Ad -->
+        <div class="ad-position-sidebar">
+            {% show_ad 'sidebar-bottom' %}
+        </div>
+    </aside>
+
+    <!-- Footer Ad Space -->
+    <div class="ad-position-footer">
+        {% show_ad 'footer-banner' %}
+    </div>
+
     <!-- Footer -->
     <footer class="footer" role="contentinfo">
         <div class="footer-container">
@@ -330,10 +432,28 @@
             <button id="theme-toggle" aria-label="Toggle dark/light theme">🌙</button>
         </div>
     </footer>
+
+    <!-- Sticky Ad (optional) -->
+    <div class="ad-position-sticky" id="sticky-ad">
+        {% show_ad 'sticky-bottom' %}
+        <button class="ad-close-button" onclick="closeStickyAd()">&times;</button>
+    </div>
+
+    <script>
+        function closeStickyAd() {
+            document.getElementById('sticky-ad').style.display = 'none';
+            // Store preference in localStorage
+            localStorage.setItem('sticky-ad-closed', 'true');
+        }
+        
+        // Check if user previously closed sticky ad
+        if (localStorage.getItem('sticky-ad-closed')) {
+            document.getElementById('sticky-ad').style.display = 'none';
+        }
+    </script>
     
     <!-- JavaScript - REPLACE THE EXISTING SCRIPT SECTION WITH THIS -->
     {% javascript 'main' %}
-    
     <script>
         // Get CSRF token for JavaScript use
         function getCookie(name) {
@@ -497,6 +617,8 @@
     </script>
     {% endif %}
 
+    
+
     <!-- Structured Data -->
     {% block jsonld %}
     <script type="application/ld+json">
@@ -513,6 +635,34 @@
     }
     </script>
     {% endblock %}
+
+    <!-- Advanced Features Scripts -->
+<script src="{% static 'js/analytics-manager.js' %}"></script>
+{% if voice_search_enabled %}
+<script src="{% static 'js/voice-search.js' %}"></script>
+{% endif %}
+<script src="{% static 'js/pwa-manager.js' %}"></script>
+
+<!-- PWA Install Button -->
+<button id="pwa-install-btn" style="display: none;" class="btn btn-primary">
+    Install App
+</button>
+
+<!-- Connection Status -->
+<div id="connection-status" class="connection-status" style="display: none;"></div>
+
+{% if user.is_authenticated %}
+<script>
+    // Make the key available globally
+    window.VAPID_PUBLIC_KEY = '{{ WEBPUSH_SETTINGS.VAPID_PUBLIC_KEY }}';
+    // Mark user as authenticated for push notifications
+    document.body.dataset.userAuthenticated = 'true';
+
+    
+</script>
+
+{% endif %}
+
 
 </body>
 </html>

@@ -12,6 +12,11 @@ urlpatterns = [
      path('tag/<slug:tag_slug>/', views.tagged_posts, name='tagged_posts'),
      path('tags/suggestions/', views.tag_suggestions, name='tag_suggestions'),
      path("sitemap.xml", sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
-     path("robots.txt", views.robots_txt),
+     #path("robots.txt", views.robots_txt),
+     # News sitemap
+    path('news-sitemap.xml', views.news_sitemap_view, name='news_sitemap'),
+    
+    # Enhanced robots.txt (optional - you can keep your existing one)
+    path("robots.txt", views.enhanced_robots_txt, name='enhanced_robots_txt'),
 
 ]

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notification Preferences{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="bi bi-bell"></i> Notification Preferences</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <h5 class="mb-3">Notification Types</h5>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.notify_new_posts }}
+                            <label class="form-check-label" for="{{ form.notify_new_posts.id_for_label }}">
+                                <strong>{{ form.notify_new_posts.label }}</strong>
+                                <br><small class="text-muted">Get notified when new blog posts are published</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.notify_comments }}
+                            <label class="form-check-label" for="{{ form.notify_comments.id_for_label }}">
+                                <strong>{{ form.notify_comments.label }}</strong>
+                                <br><small class="text-muted">Get notified about new comments</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.notify_comment_replies }}
+                            <label class="form-check-label" for="{{ form.notify_comment_replies.id_for_label }}">
+                                <strong>{{ form.notify_comment_replies.label }}</strong>
+                                <br><small class="text-muted">Get notified when someone replies to your comment</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            {{ form.notify_system }}
+                            <label class="form-check-label" for="{{ form.notify_system.id_for_label }}">
+                                <strong>{{ form.notify_system.label }}</strong>
+                                <br><small class="text-muted">Important system announcements</small>
+                            </label>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="mb-3">Category Preferences</h5>
+                        <p class="text-muted">Select categories you want to receive notifications for:</p>
+                        
+                        <div class="mb-4">
+                            {% for checkbox in form.categories %}
+                                <div class="form-check">
+                                    {{ checkbox.tag }}
+                                    <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                        {{ checkbox.choice_label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            <small class="text-muted">{{ form.categories.help_text }}</small>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="mb-3">Delivery Methods</h5>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.push_enabled }}
+                            <label class="form-check-label" for="{{ form.push_enabled.id_for_label }}">
+                                <strong>{{ form.push_enabled.label }}</strong>
+                                <br><small class="text-muted">Receive browser push notifications</small>
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            {{ form.email_enabled }}
+                            <label class="form-check-label" for="{{ form.email_enabled.id_for_label }}">
+                                <strong>{{ form.email_enabled.label }}</strong>
+                                <br><small class="text-muted">Receive notifications via email</small>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Preferences
+                            </button>
+                            <a href="/" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

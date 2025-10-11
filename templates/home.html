@@ -51,7 +51,6 @@
 <link rel="preload" as="image" href="{{ featured_post.featured_image.url }}">
 {% endif %}
 
-
 {% endblock %}
 
 {% block content %}
@@ -74,7 +73,9 @@
           <article class="trending-post">
             {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-trending" context_name="sidebar" %}
             <div class="side-post">
-              <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read trending article: {{ post.title }}">{{ post.title }} | {{ post.category.category_name }}</a></h3>
+              <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read trending article: {{ post.title }}">{{ post.title }}
+                <div class="catename">{{ post.category.category_name }}</div>
+              </a></h3>
               <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </div>
@@ -92,13 +93,13 @@
             <a href="{% url 'blogs' category_slug=featured_post.category.slug slug=featured_post.slug %}" aria-label="Read featured article: {{ featured_post.title }}">
               {% seo_responsive_image featured_post alt="Featured image for '{{ featured_post.title }}'" css_class="img-featured-article" context_name="full" %}
               <div class="overlay">
-                <h2>{{ featured_post.title }}</h2>
+                <h3>{{ featured_post.title }}</h3>
                 <p>{{ featured_post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-                <time class="datetime" datetime="{{ featured_post.created_at|date:'c' }}">{{ featured_post.created_at|date:"M d, Y" }}</time > 
-              </div>
+                <time class="datetime" datetime="{{ featured_post.created_at|date:'c' }}">{{ featured_post.created_at|date:"M d, Y" }}</time>
                 <div class="readmore">
                   Read More <i class="fas fa-arrow-right"></i>
                 </div>
+              </div>
             </a>
           </article>
         {% else %}
@@ -115,7 +116,9 @@
           <article class="editors-post">
             {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" %}
             <div class="side-post">
-              <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read editor's pick: {{ post.title }}">{{ post.title }} | {{ post.category.category_name }}</a></h3>
+              <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read editor's pick: {{ post.title }}">{{ post.title }}
+                <div class="catename">{{ post.category.category_name }}</div>
+              </a></h3>
               <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </div>
@@ -139,9 +142,9 @@
                 {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-article-card" context_name="post" %}
                 <h3>{{ post.title }}</h3> 
                 <div class="catename">{{ post.category.category_name }}</div>
+                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
+                <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
               </a>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
-              <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </article>
           {% endif %}
         {% empty %}
@@ -193,10 +196,10 @@
                     <h4>{{ post.title }}</h4>
                     <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
                     <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
-                  </div>
                     <div class="readmore">
                       Read More <i class="fas fa-arrow-right"></i>
                     </div>
+                  </div>
                 </a>
               </article>
             {% endwith %}

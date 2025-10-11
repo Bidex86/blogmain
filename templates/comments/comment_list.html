@@ -1,9 +1,10 @@
 {% load comment_tags %}
+{% load profile_filters %}
 
 <div class="comments-list" id="comments-list">
     {% if comments %}
         {% for comment in comments %}
-            {% include 'comments/comment_item.html' %}
+            {% include 'comments/comment_item.html' with comment=comment content_type_id=content_type_id object=object %}
         {% endfor %}
         
         <!-- Pagination -->

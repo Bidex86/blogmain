@@ -13,10 +13,11 @@ from django.contrib.auth import logout
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.conf import settings
-
+#from django.views.decorators.cache import never_cache
 
 
 @login_required(login_url='/accounts/login/')
+# Never cache this view
 def profile_settings(request):
     """View for user to edit their profile settings"""
     profile, created = Profile.objects.get_or_create(user=request.user)
@@ -34,7 +35,6 @@ def profile_settings(request):
         'form': form,
         'profile': profile
     })
-
 
 class CustomSignupView(SignupView):
     template_name = 'account/signup.html'

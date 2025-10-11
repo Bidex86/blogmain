@@ -5,6 +5,7 @@
 {% stylesheet 'main' %}
 {% javascript 'main' %}
 {% load custom_filters %}
+{% load ad_tags %}
 
 {% block meta_description %}Articles under {{ category.category_name }} - Explore our latest posts.{% endblock %}
 {% block meta_keywords %}{{ category.category_name }}, blog, news{% endblock %}
@@ -102,6 +103,13 @@
         </div>
       {% endif %}
     </section>
+
+    <!-- Show ad after every 3rd post -->
+        {% if forloop.counter0|divisibleby:3 and not forloop.first %}
+            <div class="ad-position-between-posts">
+                {% show_ad 'between-posts' %}
+            </div>
+        {% endif %}
 
     <!-- Pagination -->
     <nav aria-label="Page navigation" class="pagination-wrapper">

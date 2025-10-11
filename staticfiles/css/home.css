@@ -116,19 +116,21 @@ img {
   border-radius: 0;
   overflow: hidden;
   transition: transform 0.2s ease;
-  height: auto; /* Changed from fixed height */
+  height: auto;
+  text-decoration: none;
 }
 
 .featured-article:hover {
   transform: translateY(-2px);
+  text-decoration: none;
 }
 
 .featured-article img {
   width: 100%;
-  height: 400px; /* Keep image height fixed */
+  height: 400px;
   object-fit: cover;
   transition: transform 0.3s ease;
-  display: block; /* Ensure image is block level */
+  display: block;
 }
 
 .featured-article:hover img {
@@ -137,59 +139,96 @@ img {
 
 /* Updated overlay - now positioned below image instead of overlaying */
 .overlay {
-  position: static; /* Changed from absolute */
+  position: static;
   bottom: auto;
   left: auto;
   right: auto;
-  background: #ffffff; /* Changed from gradient overlay */
-  padding: 24px; /* Adjusted padding */
-  color: #141414; /* Changed from white text */
-  border-top: 3px solid #BB1919; /* Add BBC-style red border */
+  background: #ffffff;
+  padding: 24px;
+  color: #141414;
+  border-top: 3px solid #BB1919;
 }
 
 .overlay h2 {
   margin: 0 0 12px;
   font-size: 2.5rem;
   font-weight: 700;
-  text-shadow: none; /* Removed text shadow */
-  color: #141414; /* Ensure dark text */
+  text-shadow: none;
+  color: #141414;
+  line-height: 1.2;
 }
 
-.overlay h2 a {
-  color: #141414; /* Dark text for links */
+.overlay h3 {
+  margin: 0 0 12px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: none;
+  color: #141414;
+  line-height: 1.2;
+}
+
+.overlay h2 a,
+.overlay h3 a {
+  color: #141414;
   text-decoration: none;
 }
 
-.overlay h2 a:hover {
-  color: #1D70B8; /* BBC blue on hover */
+.overlay h2 a:hover,
+.overlay h3 a:hover {
+  color: #1D70B8;
   text-decoration: underline;
 }
 
-
+/* UPDATED: Read More Button - Fixed positioning and styling */
 .readmore {
   border-radius: 25px;
-  border: 2px solid red;
-  padding: 8px;
-  width: 140px;
-  height: 45px;  
-  color: black;
-  text-align: center; 
+  border: 2px solid #BB1919;
+  padding: 8px 16px;
+  width: auto;
+  min-width: 140px;
+  height: auto;
+  min-height: 45px;
+  color: #BB1919;
+  background: white;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  transition: all 0.3s ease;
+  text-decoration: none;
 }
+
+.readmore:hover {
+  background: #BB1919;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(187, 25, 25, 0.2);
+}
+
+.readmore:focus {
+  outline: 3px solid #FFDD00;
+  outline-offset: 2px;
+}
+
 .overlay p {
   font-size: 18px;
   margin-bottom: 8px;
-  text-shadow: none; /* Removed text shadow */
+  text-shadow: none;
   line-height: 1.4;
-  color: #5A5A5A; /* Lighter gray for description */
+  color: #5A5A5A;
 }
 
 .overlay .datetime {
   font-size: 14px;
-  opacity: 1; /* Full opacity */
+  opacity: 1;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #8C8C8C; /* Gray for timestamp */
+  color: #8C8C8C;
 }
 
 /* ===========================
@@ -203,9 +242,7 @@ img {
 
 .sidebar h3 {
   font-size: 1.2rem;
-  font-weight: 700;
   color: #BB1919;
-  /*text-transform: uppercase;*/
   letter-spacing: -0.5px;
   margin-bottom: 24px;
   padding-bottom: 12px;
@@ -218,7 +255,7 @@ img {
 .sidebar-item,
 .sidebar-item-right {
   display: flex;
-  flex-direction: column; /* This puts text UNDER image */
+  flex-direction: column;
   padding-bottom: 20px;
   margin-bottom: 20px;
   border-bottom: 1px solid #E6E8EA;
@@ -249,7 +286,7 @@ img {
   width: 100%;
   height: 140px;
   object-fit: cover;
-  margin-bottom: 12px; /* Space between image and text */
+  margin-bottom: 12px;
   transition: transform 0.2s ease;
 }
 
@@ -265,14 +302,13 @@ img {
   flex: 1;
 }
 
-.trending-post h4,
-.editors-post h4,
-.sidebar-item h4,
-.sidebar-item-right h4 {
+.trending-post h3,
+.editors-post h3,
+.sidebar-item h3,
+.sidebar-item-right h3 {
   margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 2rem;
+  /*line-height: 1.3;*/
 }
 
 .trending-post h4 a,
@@ -293,8 +329,8 @@ img {
 
 .trending-post p,
 .editors-post p,
-.sidebar-item .description,
-.sidebar-item-right .description {
+.sidebar-item p,
+.sidebar-item-right p {
   font-size: 14px;
   color: #5A5A5A;
   margin: 0 0 8px;
@@ -334,21 +370,37 @@ img {
   border-bottom: 1px solid #E6E8EA;
 }
 
+/* UPDATED: Category Name Badge - Fixed sizing and styling */
 .catename {
   border-radius: 22px;
-  border: 2px solid red;
-  padding: 8px;
-  width: 75px;
-  height: 40px;  
-  color: black;
-  font-size: small;
+  border: 2px solid  rgb(10, 2, 2);
+  padding: 6px 12px;
+  width: auto;
+  min-width: 75px;
+  height: auto;
+  color: white;
+  background: #BB1919;
+  font-size: 12px;
+  font-weight: 600;
   text-align: center;
- 
+  display: inline-block;
+  margin: 8px 0;
+  transition: all 0.2s ease;
+}
+
+.catename:hover {
+  background: #e24141;
+  color: white;
+}
+
+.catename:focus {
+  outline: 3px solid #FFDD00;
+  outline-offset: 2px;
 }
 
 .recent-articles .grid-4 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 32px;
   margin-top: 24px;
 }
@@ -357,13 +409,7 @@ img {
   background: none;
   transition: transform 0.2s ease;
   display: block;
-}
-
-.article-card {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #BB1919;
-  margin-bottom: 3px;
+  position: relative;
 }
 
 .article-card:hover {
@@ -382,8 +428,27 @@ img {
   transform: scale(1.02);
 }
 
+/* UPDATED: Article Card Headings - Fixed hierarchy and styling */
+.article-card h3 {
+  font-size: 18px;
+  color: #141414;
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.article-card h3 a {
+  color: #141414;
+  text-decoration: none;
+}
+
+.article-card h3 a:hover {
+  color: #1D70B8;
+  text-decoration: underline;
+}
+
 .article-card h4 {
-  font-size: 15px;
+  font-size: 18px;
   color: #141414;
   font-weight: 700;
   margin-bottom: 12px;
@@ -427,7 +492,7 @@ img {
 }
 
 .category-divider {
-  display: none; /* Replaced by border-top */
+  display: none;
 }
 
 .category-block h2 {
@@ -469,7 +534,7 @@ img {
 .category-sidebar .sidebar-item,
 .category-sidebar-right .sidebar-item-right {
   display: flex;
-  flex-direction: column; /* Text under image */
+  flex-direction: column;
   padding-bottom: 20px;
   margin-bottom: 20px;
   border-bottom: 1px solid #E6E8EA;
@@ -485,16 +550,16 @@ img {
   width: 100%;
   height: 140px;
   object-fit: cover;
-  margin-bottom: 12px; /* Space between image and text */
+  margin-bottom: 12px;
 }
 
 /* Category Featured Article - also update for consistency */
 .category-block .main-feature .featured-article {
-  height: auto; /* Changed from fixed height */
+  height: auto;
 }
 
 .category-block .main-feature .featured-article img {
-  height: 350px; /* Keep image height */
+  height: 350px;
 }
 
 .category-block .overlay {
@@ -731,18 +796,19 @@ img {
   }
 
   .featured-article {
-    height: auto; /* Changed from fixed height */
+    height: auto;
   }
 
   .featured-article img {
-    height: 300px; /* Keep mobile image height */
+    height: 300px;
   }
 
   .overlay {
-    padding: 16px; /* Reduced padding on mobile */
+    padding: 16px;
   }
 
-  .overlay h2 {
+  .overlay h2,
+  .overlay h3 {
     font-size: 1.75rem;
   }
 
@@ -750,12 +816,25 @@ img {
     font-size: 16px;
   }
 
+  /* UPDATED: Read More Button - Mobile responsive */
+  .readmore {
+    padding: 6px 12px;
+    min-width: 120px;
+    font-size: 13px;
+  }
+
+  /* UPDATED: Category Name Badge - Mobile responsive */
+  .catename {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
   /* MOBILE: Change to horizontal layout for space efficiency */
   .trending-post,
   .editors-post,
   .sidebar-item,
   .sidebar-item-right {
-    flex-direction: row; /* Side by side on mobile */
+    flex-direction: row;
     gap: 12px;
     align-items: flex-start;
   }
@@ -788,7 +867,7 @@ img {
   }
 
   .recent-articles .grid-4 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
   }
 
@@ -796,12 +875,13 @@ img {
     height: 150px;
   }
 
+  .article-card h3,
   .article-card h4 {
     font-size: 16px;
   }
 
   .article-card p {
-    display: none; /* Hide descriptions on mobile like BBC */
+    display: none;
   }
 
   /* Category Section mobile */
@@ -855,7 +935,7 @@ img {
   }
 
   .grid-3 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
   }
 
@@ -868,7 +948,7 @@ img {
   }
 
   .grid-3 p {
-    display: none; /* Hide descriptions on mobile */
+    display: none;
   }
 
   /* Pagination mobile */
@@ -900,8 +980,16 @@ img {
     padding: 12px;
   }
 
-  .overlay h2 {
+  .overlay h2,
+  .overlay h3 {
     font-size: 1.5rem;
+  }
+
+  /* UPDATED: Read More Button - Small screen responsive */
+  .readmore {
+    padding: 6px 10px;
+    min-width: 100px;
+    font-size: 12px;
   }
 
   .recent-articles .grid-4,
@@ -988,6 +1076,7 @@ img {
   }
 
   .overlay h2,
+  .overlay h3,
   .overlay h4 {
     text-shadow: none;
   }

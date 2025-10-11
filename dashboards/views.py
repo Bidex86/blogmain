@@ -13,6 +13,14 @@ from datetime import datetime
 from django.core.cache import cache
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
+from ads.models import Advertisement, AdPosition
+from blogs.ai_content import AIContentIntelligence
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from blogs.link_building import AILinkBuilder
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +39,38 @@ def dashboard(request):
     blogs_count = Blog.objects.all().count()
     profile, _ = Profile.objects.get_or_create(user=request.user)
     users_count = User.objects.all().count()
+
+    # Add advertisement analytics (only for staff)
+    ad_analytics = None
+    if request.user.is_staff:
+        ad_analytics = get_simple_ad_analytics()
     
     context = {
         'category_count': category_count,
         'blogs_count': blogs_count,
         'profile': profile,
         'users_count': users_count,
+        'ad_analytics': ad_analytics,
+        'show_ad_analytics': request.user.is_staff,
     }
     return render(request, 'dashboard/dashboard.html', context)
+
+def get_simple_ad_analytics():
+    """Simple analytics - just the essentials"""
+    from ads.models import Advertisement
+    
+    # Calculate basic stats
+    total_impressions = sum(ad.impressions for ad in Advertisement.objects.filter(is_active=True))
+    total_clicks = sum(ad.clicks for ad in Advertisement.objects.filter(is_active=True))
+    active_ads_count = Advertisement.objects.filter(is_active=True).count()
+    overall_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
+    
+    return {
+        'total_impressions': total_impressions,
+        'total_clicks': total_clicks,
+        'overall_ctr': overall_ctr,
+        'active_ads_count': active_ads_count,
+    }
 
 @login_required
 @user_passes_test(is_admin_user)
@@ -114,7 +146,7 @@ def delete_category(request, pk):
     
     return redirect('categories')
 
-
+@never_cache  # Never cache this view
 def posts(request):
     posts = Blog.objects.all()
     context = {
@@ -155,8 +187,12 @@ def generate_unique_slug(title, post_id=None, existing_slugs=None):
 
 @login_required
 @user_passes_test(is_admin_user)
-@never_cache  # Never cache this view
+@never_cache
 def add_post(request):
+    # Initialize variables
+    post = None
+    ai_analysis = None
+    
     if request.method == 'POST':
         form = BlogPostForm(request.POST, request.FILES)
         if form.is_valid():
@@ -180,6 +216,22 @@ def add_post(request):
                 post.slug = final_slug
                 post.save(update_fields=['slug'])
             
+            # Run AI analysis after saving
+            try:
+                ai_analyzer = AIContentIntelligence(post)
+                ai_analysis = ai_analyzer.analyze_content()
+                # Store analysis in session
+                request.session['ai_analysis'] = ai_analysis
+
+                # OPTIONAL: Run link building analysis
+                link_builder = AILinkBuilder()
+                link_suggestions = link_builder.generate_link_suggestions(post)
+                ai_analysis['link_suggestions'] = link_suggestions
+
+            except Exception as e:
+                print(f"AI Analysis failed: {e}")
+                ai_analysis = None
+            
             # Check if the post is being published
             is_published = getattr(post, 'status', 'Draft') == 'Published'
             
@@ -199,10 +251,14 @@ def add_post(request):
         else:
             print('form is invalid')
             print(form.errors)
+    else:
+        # GET request - create new form
+        form = BlogPostForm()
     
-    form = BlogPostForm()
     context = {
-        'form': form
+        'form': form,
+        'post': post,  # Will be None for GET requests
+        'ai_analysis': ai_analysis,  # Will be None for GET requests
     }
     return render(request, 'dashboard/add_post.html', context)
 
@@ -211,6 +267,15 @@ def add_post(request):
 def edit_post(request, pk):
     post = get_object_or_404(Blog, pk=pk)
     was_published = getattr(post, 'status', 'Draft') == 'Published'
+
+    # Run AI analysis on existing content
+    ai_analyzer = AIContentIntelligence(post)
+    ai_analysis = ai_analyzer.analyze_content()
+
+    # OPTIONAL: Run link building analysis
+    link_builder = AILinkBuilder()
+    link_suggestions = link_builder.generate_link_suggestions(post)
+    ai_analysis['link_suggestions'] = link_suggestions
     
     if request.method == 'POST':
         form = BlogPostForm(request.POST, request.FILES, instance=post)
@@ -246,13 +311,77 @@ def edit_post(request, pk):
                 messages.success(request, f'Post "{updated_post.title}" has been updated successfully.')
             
             return redirect('posts')
+        
+    # Re-run analysis after changes
+        ai_analyzer = AIContentIntelligence(post)
+        ai_analysis = ai_analyzer.analyze_content()
+
+        # OPTIONAL: Run link building analysis
+        link_builder = AILinkBuilder()
+        link_suggestions = link_builder.generate_link_suggestions(post)
+        ai_analysis['link_suggestions'] = link_suggestions
     
     form = BlogPostForm(instance=post)
     context = {
         'form': form,
         'post': post,
+        'ai_analysis': ai_analysis
     }
     return render(request, 'dashboard/edit_post.html', context)
+
+# NEW: Add this AJAX endpoint for real-time analysis
+@csrf_exempt
+def analyze_content_ajax(request):
+    """AJAX endpoint for real-time content analysis"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Create temporary post object for analysis
+            class TempPost:
+                def __init__(self, title, content, focus_keyword=''):
+                    self.title = title
+                    self.blog_body = content
+                    self.focus_keyword = focus_keyword
+                    
+                def get_meta_description(self):
+                    return data.get('meta_description', '')
+            
+            temp_post = TempPost(
+                title=data.get('title', ''),
+                content=data.get('content', ''),
+                focus_keyword=data.get('focus_keyword', '')
+            )
+            
+            ai_analyzer = AIContentIntelligence(temp_post)
+            analysis = ai_analyzer.analyze_content()
+            
+            return JsonResponse({
+                'success': True,
+                'analysis': analysis
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+# NEW: Add this for analyzing existing posts
+def analyze_existing_post(request, post_id):
+    """Analyze an existing post and return results"""
+    post = get_object_or_404(Blog, id=post_id)
+    
+    ai_analyzer = AIContentIntelligence(post)
+    analysis = ai_analyzer.analyze_content()
+    
+    return JsonResponse({
+        'success': True,
+        'analysis': analysis,
+        'post_id': post_id
+    })
 
 @login_required
 @user_passes_test(is_admin_user)

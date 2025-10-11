@@ -25,25 +25,32 @@ class BlogAdminForm(ModelForm):
             )
 
 # Main Blog admin class
+# Update your existing BlogAdmin fieldsets to include news fields:
+
 class BlogAdmin(admin.ModelAdmin):
     form = BlogAdminForm
-    list_display = ['title', 'category', 'author', 'status', 'created_at', 'get_tags']
-    list_filter = ['status', 'category', 'is_featured', 'created_at', 'tags']
-    search_fields = ['title', 'blog_body', 'tags__name']
+    list_display = ['title', 'category', 'author', 'status', 'is_breaking_news', 'news_priority', 'created_at', 'get_tags']
+    list_filter = ['status', 'category', 'is_featured', 'is_breaking_news', 'news_priority', 'created_at', 'tags']
+    search_fields = ['title', 'blog_body', 'tags__name', 'news_keywords']
     prepopulated_fields = {'slug': ('title',)}
     list_per_page = 20
     
-    # Custom fieldsets for better organization
+    # Updated fieldsets with news fields
     fieldsets = (
         ('Content', {
             'fields': ('title', 'slug', 'category', 'blog_body', 'short_description')
         }),
         ('Media', {
-            'fields': ('featured_image',)
+            'fields': ('featured_image', 'image_alt_text')
         }),
         ('SEO & Tags', {
-            'fields': ('seo_keywords', 'tags'),
+            'fields': ('seo_keywords', 'tags', 'focus_keyword', 'meta_title', 'meta_description'),
             'description': 'Tags help categorize and make content discoverable.'
+        }),
+        ('News Settings', {
+            'fields': ('is_breaking_news', 'news_priority', 'news_genre', 'news_keywords', 'geo_locations', 'exclude_from_news'),
+            'classes': ('collapse',),
+            'description': 'Configure Google News sitemap inclusion and metadata.'
         }),
         ('Publishing Options', {
             'fields': ('status', 'is_featured', 'is_editors_pick', 'author'),
@@ -51,6 +58,25 @@ class BlogAdmin(admin.ModelAdmin):
         }),
     )
     
+    # Add custom admin actions
+    actions = ['mark_as_breaking_news', 'exclude_from_news_sitemap', 'include_in_news_sitemap']
+    
+    def mark_as_breaking_news(self, request, queryset):
+        updated = queryset.update(is_breaking_news=True, news_priority='breaking')
+        self.message_user(request, f'{updated} articles marked as breaking news.')
+    mark_as_breaking_news.short_description = "Mark as breaking news"
+    
+    def exclude_from_news_sitemap(self, request, queryset):
+        updated = queryset.update(exclude_from_news=True)
+        self.message_user(request, f'{updated} articles excluded from news sitemap.')
+    exclude_from_news_sitemap.short_description = "Exclude from news sitemap"
+    
+    def include_in_news_sitemap(self, request, queryset):
+        updated = queryset.update(exclude_from_news=False)
+        self.message_user(request, f'{updated} articles included in news sitemap.')
+    include_in_news_sitemap.short_description = "Include in news sitemap"
+
+
     def get_tags(self, obj):
         """Display tags in list view"""
         tags = obj.tags.all()
@@ -61,10 +87,10 @@ class BlogAdmin(admin.ModelAdmin):
             tag_names.append(f"... +{tags.count() - 3} more")
         return ", ".join(tag_names)
     get_tags.short_description = 'Tags'
-    
+
     # Custom actions
     actions = ['duplicate_with_tags', 'clear_all_tags']
-    
+
     def duplicate_with_tags(self, request, queryset):
         """Custom action to duplicate posts with their tags"""
         for blog in queryset:
@@ -76,7 +102,7 @@ class BlogAdmin(admin.ModelAdmin):
             blog.tags.set(old_tags)
         self.message_user(request, f"Successfully duplicated {queryset.count()} blog posts with tags.")
     duplicate_with_tags.short_description = "Duplicate selected blogs with tags"
-    
+
     def clear_all_tags(self, request, queryset):
         """Remove all tags from selected posts"""
         for blog in queryset:

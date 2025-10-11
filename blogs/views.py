@@ -12,23 +12,44 @@ from django.contrib.contenttypes.models import ContentType
 from comments.models import Comment
 from comments.forms import CommentForm
 from django.core.cache import cache
+from django.conf import settings
 from django.views.decorators.cache import cache_page
 from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.vary import vary_on_cookie
+from .sitemaps import NewsSitemap
+from blogs.ai_content import AIContentIntelligence
+from blogs.voice_search import VoiceSearchOptimizer
+from blogs.analytics import UserBehaviorAnalytics
 
 
-def robots_txt(request):
+
+# Enhanced robots.txt view
+def enhanced_robots_txt(request):
+    """Enhanced robots.txt with news sitemap"""
     lines = [
         "User-Agent: *",
         "Disallow: /admin/",
         "Disallow: /accounts/",
         "Disallow: /dashboard/",
+        "Disallow: /api/",
         "Allow: /",
         "",
-        "Sitemap: https://yourdomain.com/sitemap.xml"  # Update with your domain
+        # Regular sitemaps
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
+        # News sitemap
+        f"Sitemap: {request.build_absolute_uri('/news-sitemap.xml')}",
+        "",
+        "# Crawl delay for various bots",
+        "User-agent: Googlebot",
+        "Crawl-delay: 1",
+        "",
+        "User-agent: Bingbot", 
+        "Crawl-delay: 1",
+        "",
+        "User-agent: *",
+        "Crawl-delay: 5"
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
-
 
 def tag_suggestions(request):
     query = request.GET.get('q', '').strip()
@@ -158,6 +179,36 @@ def blogs(request, category_slug, slug):
         status='Published'
     ).exclude(id=single_blog.id).order_by('-created_at')[:5]
 
+    # AI Content Analysis
+    if settings.AI_CONTENT_SETTINGS['ENABLE_CONTENT_ANALYSIS']:
+        ai_analyzer = AIContentIntelligence(single_blog)
+        content_analysis = ai_analyzer.analyze_content()
+    else:
+        content_analysis = None
+    
+    # Voice Search Optimization
+    if settings.VOICE_SEARCH_SETTINGS['ENABLE_VOICE_SEARCH']:
+        voice_optimizer = VoiceSearchOptimizer(single_blog)
+        voice_analysis = voice_optimizer.analyze_voice_readiness()
+    else:
+        voice_analysis = None
+    
+    # Track analytics
+    if settings.ANALYTICS_ENABLED:
+        analytics = UserBehaviorAnalytics()
+        analytics.track_custom_event(
+            'page_view',
+            user_id=request.session.session_key,
+            session_id=request.session.session_key,
+            content_object=single_blog,
+            event_data={
+                'category': category.category_name,
+                'tags': [tag.name for tag in single_blog.tags.all()],
+                'reading_time': single_blog.get_reading_time(),
+            },
+            request=request
+        )
+
     # Increase view count
     single_blog.views += 1
     single_blog.save(update_fields=['views'])
@@ -206,6 +257,14 @@ def blogs(request, category_slug, slug):
         'reading_time': post.get_reading_time() if hasattr(post, 'get_reading_time') else 5,
         'word_count': post.get_word_count() if hasattr(post, 'get_word_count') else 0,
         'seo_score': post.get_seo_score() if hasattr(post, 'get_seo_score') else 0,
+
+        # AI Features
+        'content_analysis': content_analysis,
+        'voice_analysis': voice_analysis,
+        
+        # Settings
+        'voice_search_enabled': settings.VOICE_SEARCH_SETTINGS['ENABLE_VOICE_SEARCH'],
+        'analytics_enabled': settings.ANALYTICS_ENABLED
     }
     return render(request, 'blogs.html', context)
 
@@ -251,3 +310,32 @@ def search(request):
         'result_count': blogs.count() if keyword else 0,
     }
     return render(request, 'search.html', context)
+
+# Add views to serve the news sitemap - blogs/views.py additions
+
+@cache_page(60 * 30)  # Cache for 30 minutes
+def news_sitemap_view(request):
+    """Serve Google News sitemap"""
+    try:
+        news_sitemap = NewsSitemap()
+        xml_content = news_sitemap.generate_news_sitemap_xml()
+        
+        response = HttpResponse(
+            f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_content}',
+            content_type='application/xml'
+        )
+        response['Content-Disposition'] = 'inline; filename="news-sitemap.xml"'
+        return response
+        
+    except Exception as e:
+        # Log error and return empty sitemap
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error generating news sitemap: {e}")
+        
+        # Return minimal valid sitemap
+        empty_sitemap = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+</urlset>'''
+        return HttpResponse(empty_sitemap, content_type='application/xml')

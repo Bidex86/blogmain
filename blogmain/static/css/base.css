@@ -1,31 +1,12 @@
-/* stylelint-disable selector-list-comma-newline-after */
-@import url('https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
 
 body {
-  font-family: "PT Serif", serif;
-  font-weight: 300;
-  font-style: normal;
+  margin: 0;
+  background: #ffffff;
+  color: #080707;
+  line-height: 1.5;
+  font-family: "BBC Reith Sans", Helvetica, Arial, sans-serif;
+  font-size: 16px;
 }
-
-body {
-  font-family: "PT Serif", serif;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.pt-serif-regular-italic {
-  font-family: "PT Serif", serif;
-  font-weight: 400;
-  font-style: italic;
-}
-
-.pt-serif-bold-italic {
-  font-family: "PT Serif", serif;
-  font-weight: 700;
-  font-style: italic;
-}
-
 
 /* === Navbar Styles === */
 :root {

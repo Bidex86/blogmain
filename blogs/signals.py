@@ -12,25 +12,26 @@ from io import BytesIO
 from PIL import Image, ImageOps
 from django.core.files.base import ContentFile
 from pathlib import Path
-
+from django.db.models.signals import post_save
+from comments.models import Comment
+from notifications.views import create_notification, send_push_notification, NotificationPreference, notify_users_new_post
 
 # ---------------- EMAIL ALERT ---------------- #
 @receiver(post_save, sender=Blog)
 def send_new_post_email(sender, instance, created, **kwargs):
-    # Only send email for published posts, not drafts
+    """Send email and push notifications for published posts"""
     if created and getattr(instance, 'status', 'Draft') == 'Published':
         try:
+            # Send email (existing code)
             subject = f"New post: {instance.title}"
             from_email = 'bidemia02@gmail.com'
             recipient_list = [u.email for u in User.objects.filter(profile__newsletter_opt_in=True)]
             
-            # Use the same template as your manual email system
             html_content = render_to_string('emails/add_post.html', {
                 'post': instance,
-                'request': None  # You might need to pass request context if needed
+                'request': None
             })
             
-            # Create better text content
             if hasattr(instance, 'short_description') and instance.short_description:
                 text_content = instance.short_description
             else:
@@ -40,11 +41,13 @@ def send_new_post_email(sender, instance, created, **kwargs):
             msg.attach_alternative(html_content, "text/html")
             msg.send()
             
-            print(f"Newsletter sent via signal for published post: {instance.title}")
+            print(f"Newsletter sent via email for: {instance.title}")
+            
+            # Send push notifications using the new system
+            notify_users_new_post(instance)
             
         except Exception as e:
-            print(f"Error sending newsletter via signal: {e}")
-
+            print(f"Error sending notifications: {e}")
 
 WEBP_QUALITY = 80
 JPEG_QUALITY = 80
@@ -188,3 +191,88 @@ def optimize_images(sender, instance, **kwargs):
             os.remove(image_path)
         except Exception as e:
             print(f"[Cleanup original error] {e}")
+
+@receiver(post_save, sender=Comment)
+def send_comment_notifications(sender, instance, created, **kwargs):
+    """Send notifications when new comments or replies are posted"""
+    if not created:
+        return
+    
+    from django.contrib.contenttypes.models import ContentType
+    from blogs.models import Blog
+    
+    # Get the blog post
+    blog_content_type = ContentType.objects.get_for_model(Blog)
+    
+    if instance.content_type == blog_content_type:
+        blog_post = instance.content_object
+        
+        # If this is a reply to another comment
+        if instance.parent:
+            # Notify the parent comment author
+            parent_author = instance.parent.user
+            
+            if parent_author != instance.user:  # Don't notify yourself
+                try:
+                    preference = NotificationPreference.objects.get(user=parent_author)
+                    if not preference.notify_comment_replies:
+                        return
+                except NotificationPreference.DoesNotExist:
+                    pass
+                
+                # Create notification
+                notification = create_notification(
+                    user=parent_author,
+                    notif_type='comment_reply',
+                    title=f"{instance.user.username} replied to your comment",
+                    message=instance.content[:100],
+                    url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
+                    blog_post=blog_post,
+                    comment=instance,
+                )
+                
+                # Send push notification
+                send_push_notification(
+                    user=parent_author,
+                    title=notification.title,
+                    body=notification.message,
+                    url=notification.url,
+                )
+                
+                notification.is_sent = True
+                notification.save()
+        
+        else:
+            # This is a new top-level comment on the post
+            # Notify the post author
+            post_author = blog_post.author
+            
+            if post_author != instance.user:  # Don't notify yourself
+                try:
+                    preference = NotificationPreference.objects.get(user=post_author)
+                    if not preference.notify_comments:
+                        return
+                except NotificationPreference.DoesNotExist:
+                    pass
+                
+                # Create notification
+                notification = create_notification(
+                    user=post_author,
+                    notif_type='new_comment',
+                    title=f"{instance.user.username} commented on your post",
+                    message=f'"{blog_post.title}": {instance.content[:80]}',
+                    url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
+                    blog_post=blog_post,
+                    comment=instance,
+                )
+                
+                # Send push notification
+                send_push_notification(
+                    user=post_author,
+                    title=notification.title,
+                    body=notification.message,
+                    url=notification.url,
+                )
+                
+                notification.is_sent = True
+                notification.save()
