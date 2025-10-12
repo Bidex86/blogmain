@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config  # ADD THIS
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,10 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8ii3q!(trw!@4ol#jwdq!uos=lu)^+x^5e72(4s*cnc5+p(2t7'
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -84,13 +88,9 @@ ROOT_URLCONF = 'blogmain.urls'
 
 # Push Notification Settings
 WEBPUSH_SETTINGS = {
-    'VAPID_PRIVATE_KEY': '''-----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg/jw2f5/5H04PhUEP
-e/KhDao/5BvH9V0QuvFqY9j27SShRANCAARVGcFyeQ93RPcWJeShcUixjaFlbawJ
-OHSK0PoDgSBJVmiV0ugYs4GnyTFyICAz/rdBlOC18HMpR13Uvd3zCouG
------END PRIVATE KEY-----''',
-    'VAPID_PUBLIC_KEY': 'BFUZwXJ5D3dE9xYl5KFxSLGNoWVtrAk4dIrQ-gOBIElWaJXS6BizgafJMXIgIDP-t0GU4LXwcylHXdS93fMKi4Y',
-    'VAPID_ADMIN_EMAIL': 'bidemia02@gmail.com'
+    'VAPID_PRIVATE_KEY': config('VAPID_PRIVATE_KEY'),
+    'VAPID_PUBLIC_KEY': config('VAPID_PUBLIC_KEY'),
+    'VAPID_ADMIN_EMAIL': config('VAPID_ADMIN_EMAIL')
 }
 
 # Advertisement Settings
