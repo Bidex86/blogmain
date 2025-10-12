@@ -142,6 +142,7 @@ venv.bak/
 
 icon/
 Bidexenv/
+.private_key.pem
 
 # Spyder project settings
 .spyderproject
