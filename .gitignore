@@ -142,7 +142,13 @@ venv.bak/
 
 icon/
 Bidexenv/
-.private_key.pem
+
+# VAPID Private Key - DO NOT COMMIT
+private_key.pem
+
+# Other sensitive files
+*.pem
+*.key
 
 # Spyder project settings
 .spyderproject
