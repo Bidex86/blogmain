@@ -176,6 +176,7 @@ def send_push_notification(user, title, body, url='/', image=None):
 def notify_users_new_post(blog_post):
     """Notify users about a new blog post based on their preferences"""
     from django.contrib.auth.models import User
+    from django.utils.html import strip_tags  # ADD THIS IMPORT
     
     # Get all users with notifications enabled
     users = User.objects.filter(profile__newsletter_opt_in=True)
@@ -195,12 +196,16 @@ def notify_users_new_post(blog_post):
         except NotificationPreference.DoesNotExist:
             pass  # Send to users without preferences
         
+        # Clean the message - strip HTML tags
+        raw_message = blog_post.short_description if blog_post.short_description else "Check out our latest blog post!"
+        clean_message = strip_tags(raw_message)[:100]  # Strip HTML and limit to 100 chars
+        
         # Create notification record
         notification = create_notification(
             user=user,
             notif_type='new_post',
             title=f"New Post: {blog_post.title}",
-            message=blog_post.short_description[:100] if blog_post.short_description else "Check out our latest blog post!",
+            message=clean_message,  # CHANGED: Use clean_message
             url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
             blog_post=blog_post,
         )
@@ -209,7 +214,7 @@ def notify_users_new_post(blog_post):
         send_push_notification(
             user=user,
             title=f"New Post: {blog_post.title}",
-            body=notification.message,
+            body=clean_message,  # CHANGED: Use clean_message
             url=notification.url,
             image=blog_post.featured_image.url if blog_post.featured_image else None,
         )

@@ -200,6 +200,7 @@ def send_comment_notifications(sender, instance, created, **kwargs):
     
     from django.contrib.contenttypes.models import ContentType
     from blogs.models import Blog
+    from django.utils.html import strip_tags  # ADD THIS
     
     # Get the blog post
     blog_content_type = ContentType.objects.get_for_model(Blog)
@@ -207,12 +208,14 @@ def send_comment_notifications(sender, instance, created, **kwargs):
     if instance.content_type == blog_content_type:
         blog_post = instance.content_object
         
+        # Clean comment content
+        clean_content = strip_tags(instance.content)[:100]  # ADD THIS
+        
         # If this is a reply to another comment
         if instance.parent:
-            # Notify the parent comment author
             parent_author = instance.parent.user
             
-            if parent_author != instance.user:  # Don't notify yourself
+            if parent_author != instance.user:
                 try:
                     preference = NotificationPreference.objects.get(user=parent_author)
                     if not preference.notify_comment_replies:
@@ -220,22 +223,20 @@ def send_comment_notifications(sender, instance, created, **kwargs):
                 except NotificationPreference.DoesNotExist:
                     pass
                 
-                # Create notification
                 notification = create_notification(
                     user=parent_author,
                     notif_type='comment_reply',
                     title=f"{instance.user.username} replied to your comment",
-                    message=instance.content[:100],
+                    message=clean_content,  # CHANGED
                     url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
                     blog_post=blog_post,
                     comment=instance,
                 )
                 
-                # Send push notification
                 send_push_notification(
                     user=parent_author,
                     title=notification.title,
-                    body=notification.message,
+                    body=clean_content,  # CHANGED
                     url=notification.url,
                 )
                 
@@ -243,11 +244,10 @@ def send_comment_notifications(sender, instance, created, **kwargs):
                 notification.save()
         
         else:
-            # This is a new top-level comment on the post
-            # Notify the post author
+            # This is a new top-level comment
             post_author = blog_post.author
             
-            if post_author != instance.user:  # Don't notify yourself
+            if post_author != instance.user:
                 try:
                     preference = NotificationPreference.objects.get(user=post_author)
                     if not preference.notify_comments:
@@ -255,18 +255,16 @@ def send_comment_notifications(sender, instance, created, **kwargs):
                 except NotificationPreference.DoesNotExist:
                     pass
                 
-                # Create notification
                 notification = create_notification(
                     user=post_author,
                     notif_type='new_comment',
                     title=f"{instance.user.username} commented on your post",
-                    message=f'"{blog_post.title}": {instance.content[:80]}',
+                    message=f'"{blog_post.title}": {clean_content}',  # CHANGED
                     url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
                     blog_post=blog_post,
                     comment=instance,
                 )
                 
-                # Send push notification
                 send_push_notification(
                     user=post_author,
                     title=notification.title,
