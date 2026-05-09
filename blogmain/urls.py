@@ -45,7 +45,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     
     # Apps - Order matters for URL resolution
-    path('comments/', include('comments.urls')),
+    path('comments/', include('comments.urls', namespace='comments')),
     path('pages/', include('pages.urls')),
     path('dashboard/', include('dashboards.urls')),
     

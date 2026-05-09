@@ -221,7 +221,7 @@ def add_post(request):
                 ai_analyzer = AIContentIntelligence(post)
                 ai_analysis = ai_analyzer.analyze_content()
                 # Store analysis in session
-                request.session['ai_analysis'] = ai_analysis
+                #request.session['ai_analysis'] = ai_analysis
 
                 # OPTIONAL: Run link building analysis
                 link_builder = AILinkBuilder()
@@ -377,7 +377,7 @@ def analyze_existing_post(request, post_id):
     ai_analyzer = AIContentIntelligence(post)
     analysis = ai_analyzer.analyze_content()
     
-    return JsonResponse({
+    return JsonResponse({ 
         'success': True,
         'analysis': analysis,
         'post_id': post_id

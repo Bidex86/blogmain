@@ -71,11 +71,17 @@
         <h2 id="trending-heading" class="sr-only">Trending Posts</h2>
         {% for post in trending_posts %}
           <article class="trending-post">
-            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-trending" context_name="sidebar" %}
+            <div style="position: relative;">
+              {% if post.is_video_post %}
+                <div class="video-badge-small">
+                  <i class="fas fa-play"></i> VIDEO
+                </div>
+              {% endif %}
+              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-trending" context_name="sidebar" %}
+            </div>
             <div class="side-post">
-              <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read trending article: {{ post.title }}">{{ post.title }}
-                <div class="catename">{{ post.category.category_name }}</div>
-              </a></h3>
+              <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read trending article: {{ post.title }}">{{ post.title }}</a></h4>
+              <div class="catename">{{ post.category.category_name }}</div>
               <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </div>
@@ -89,8 +95,18 @@
       <section class="main-feature" aria-labelledby="main-feature-heading">
         <h2 id="main-feature-heading" class="sr-only">Main Featured Article</h2>
         {% if featured_post %}
-          <article class="featured-article">
+          <article class="featured-article {% if featured_post.is_video_post %}has-video-badge{% endif %}">
             <a href="{% url 'blogs' category_slug=featured_post.category.slug slug=featured_post.slug %}" aria-label="Read featured article: {{ featured_post.title }}">
+              {% if featured_post.is_video_post %}
+                <div class="video-overlay-badge">
+                  <i class="fas fa-play-circle"></i>
+                </div>
+                {% if featured_post.video_duration %}
+                  <div class="video-duration-badge">
+                    {{ featured_post.video_duration|date:"H:i:s" }}
+                  </div>
+                {% endif %}
+              {% endif %}
               {% seo_responsive_image featured_post alt="Featured image for '{{ featured_post.title }}'" css_class="img-featured-article" context_name="full" %}
               <div class="overlay">
                 <h3>{{ featured_post.title }}</h3>
@@ -114,11 +130,17 @@
         <h2 id="editors-picks-heading" class="sr-only">Editor's Picks</h2>
         {% for post in editors_picks %}
           <article class="editors-post">
-            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" %}
+            <div style="position: relative;">
+              {% if post.is_video_post %}
+                <div class="video-badge-small">
+                  <i class="fas fa-play"></i> VIDEO
+                </div>
+              {% endif %}
+              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" %}
+            </div>
             <div class="side-post">
-              <h3><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read editor's pick: {{ post.title }}">{{ post.title }}
-                <div class="catename">{{ post.category.category_name }}</div>
-              </a></h3>
+              <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read editor's pick: {{ post.title }}">{{ post.title }}</a></h4>
+              <div class="catename">{{ post.category.category_name }}</div>
               <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </div>
@@ -137,8 +159,16 @@
       <div class="grid-4" role="list">
         {% for post in page_obj %}
           {% if post.slug %}
-            <article class="article-card" role="listitem">
-              <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read article: {{ post.title }}">
+            <article class="article-card {% if post.is_video_post %}has-video-badge{% endif %}" role="listitem">
+              <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read article: {{ post.title }}" style="position: relative; display: block;">
+                {% if post.is_video_post %}
+                  <div class="video-overlay-badge">
+                    <i class="fas fa-play-circle"></i>
+                  </div>
+                  <div class="video-type-label">
+                    {% if post.content_type == 'video' %}🎬 Video{% else %}📹 Mixed{% endif %}
+                  </div>
+                {% endif %}
                 {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-article-card" context_name="post" %}
                 <h3>{{ post.title }}</h3> 
                 <div class="catename">{{ post.category.category_name }}</div>
@@ -173,7 +203,14 @@
           {% for post in posts|slice:"1:3" %}
             {% if post.slug %}
             <article class="sidebar-item">
-              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context_name="sidebar" %}
+              <div style="position: relative;">
+                {% if post.is_video_post %}
+                  <div class="video-badge-small">
+                    <i class="fas fa-play"></i> VIDEO
+                  </div>
+                {% endif %}
+                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context_name="sidebar" %}
+              </div>
               <div class="side-post">
                 <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read {{ category.category_name }} article: {{ post.title }}">{{ post.title }}</a></h4>
                 <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
@@ -189,8 +226,18 @@
           <h3 id="category-main-{{ category.slug }}" class="sr-only">Featured {{ category.category_name }} Article</h3>
           {% if posts %}
             {% with post=posts.0 %}
-              <article class="featured-article">
+              <article class="featured-article {% if featured_post.is_video_post %}has-video-badge{% endif %}">
                 <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read featured {{ category.category_name }} article: {{ post.title }}">
+                  {% if post.is_video_post %}
+                    <div class="video-overlay-badge">
+                      <i class="fas fa-play-circle"></i>
+                    </div>
+                    {% if featured_post.video_duration %}
+                      <div class="video-duration-badge">
+                        {{ featured_post.video_duration|date:"H:i:s" }}
+                      </div>
+                    {% endif %}
+                  {% endif %}
                   {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context_name="full" %}
                   <div class="overlay">
                     <h4>{{ post.title }}</h4>
@@ -212,7 +259,14 @@
           <h3 id="category-sidebar-right-{{ category.slug }}" class="sr-only">Additional {{ category.category_name }} Articles</h3>
           {% for post in posts|slice:"3:5" %}
             <article class="sidebar-item-right">
-              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar-right" context_name="sidebar" %}
+              <div style="position: relative;">
+                {% if post.is_video_post %}
+                  <div class="video-badge-small">
+                    <i class="fas fa-play"></i> VIDEO
+                  </div>
+                {% endif %}
+                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar-right" context_name="sidebar" %}
+              </div>
               <div class="side-post">
                 <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read {{ category.category_name }} article: {{ post.title }}">{{ post.title }}</a></h4>
                 <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
@@ -226,8 +280,16 @@
 
       <div class="grid-3" role="list" aria-label="More {{ category.category_name }} articles">
         {% for post in posts|slice:"3:6" %}
-          <article class="article-card" role="listitem">
-            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read {{ category.category_name }} article: {{ post.title }}">
+          <article class="article-card {% if post.is_video_post %}has-video-badge{% endif %}" role="listitem">
+            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read {{ category.category_name }} article: {{ post.title }}"style="position: relative; display: block;">
+              {% if post.is_video_post %}
+                <div class="video-overlay-badge">
+                  <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="video-type-label">
+                  {% if post.content_type == 'video' %}🎬 Video{% else %}📹 Mixed{% endif %}
+                </div>
+              {% endif %}
               {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-grid" context_name="post" %}
               <h5>{{ post.title }}</h5>
               <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>

@@ -1,4 +1,5 @@
 {% load comment_tags %}
+{% load profile_filters %}
 
 <!-- Template for AJAX-loaded replies -->
 <div class="replies-container">
@@ -7,7 +8,7 @@
             <div class="comment-item {{ reply.depth|depth_class }} reply-item" data-comment-id="{{ reply.id }}" id="comment-{{ reply.id }}">
                 <div class="comment-wrapper">
                     <div class="comment-header">
-                        <img src="{{ reply.user.profile.get_avatar_url|default:'/static/images/default-avatar.png' }}" 
+                        <img src="{{ reply.user|get_avatar_url }}" 
                              alt="{{ reply.user.username }}" 
                              class="comment-avatar">
                         <div class="comment-meta">
@@ -30,7 +31,7 @@
                             <!-- Like button -->
                             <form method="post" action="{% url 'comments:like_comment' reply.id %}" class="like-form inline-form">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-like {% if user in reply.likes.all %}liked{% endif %}">
+                                <button type="submit" class="btn-like {% if reply|user_has_liked:user %}liked{% endif %}">
                                     <i class="fas fa-thumbs-up"></i> 
                                     <span class="like-count">{{ reply.likes.count }}</span>
                                 </button>
@@ -43,8 +44,8 @@
                                 </button>
                             {% endif %}
                             
-                            <!-- Edit button (only for comment author) -->
-                            {% if reply.can_be_edited_by:user %}
+                            <!-- Edit button - FIXED: Added pipe for filter -->
+                            {% if reply|can_be_edited_by:user %}
                                 <a href="{% url 'comments:edit_comment' reply.id %}" class="btn-action edit-btn">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
@@ -78,7 +79,7 @@
                             <input type="hidden" name="parent_id" value="{{ reply.id }}">
                             
                             <div class="reply-form-header">
-                                <img src="{{ user.profile.get_avatar_url|default:'/static/images/default-avatar.png' }}" 
+                                <img src="{{ user|get_avatar_url }}" 
                                      alt="{{ user.username }}" 
                                      class="reply-avatar">
                                 <span>Replying to {{ reply.user.get_full_name|default:reply.user.username }}</span>
@@ -139,12 +140,12 @@
                 </div>
                 
                 <!-- Nested replies for this reply -->
-                {% if reply.children.approved.exists %}
-                    <div class="comment-replies">
-                        {% for nested_reply in reply.children.approved %}
+                {% if reply.children.all %}
+                    {% for nested_reply in reply.children.all %}
+                        {% if nested_reply.is_approved %}
                             {% include 'comments/comment_item.html' with comment=nested_reply %}
-                        {% endfor %}
-                    </div>
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
             </div>
         {% endfor %}

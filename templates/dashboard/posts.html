@@ -18,6 +18,7 @@
                         <th>S/N</th>
                         <th>Title</th>
                         <th>Category</th>
+                        <th>Type</th>
                         <th>Author</th>
                         <th>Status</th>
                         <th>Featured</th>
@@ -32,6 +33,13 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ post.title }}</td>
                         <td>{{ post.category }}</td>
+                        <td>
+                            {% if post.is_video_post %}
+                                <span class="badge-video">🎥 Video</span>
+                            {% else %}
+                                <span class="badge-article">📝 Article</span>
+                            {% endif %}
+                        </td>
                         <td>{{ post.author }}</td>
                         <td>{{ post.status }}</td>
                         <td>

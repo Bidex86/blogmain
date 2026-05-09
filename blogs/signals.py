@@ -10,6 +10,7 @@ from django.core.files.storage import default_storage
 import os, re
 from io import BytesIO
 from PIL import Image, ImageOps
+from moviepy import VideoFileClip
 from django.core.files.base import ContentFile
 from pathlib import Path
 from django.db.models.signals import post_save
@@ -96,17 +97,34 @@ def delete_old_files(instance):
         print(f"[Cleanup error] {e}")
 
 # ----------------
-# Cleanup
+# Cleanup - UPDATED to handle video files
 # ----------------
 @receiver(pre_delete, sender=Blog)
-def cleanup_images_on_delete(sender, instance, **kwargs):
+def cleanup_media_on_delete(sender, instance, **kwargs):
+    """Delete images and videos when blog post is deleted"""
+    # Clean up images
     delete_old_files(instance)
+    
+    # ADDED: Clean up video files
+    try:
+        if instance.video_file:
+            if os.path.isfile(instance.video_file.path):
+                os.remove(instance.video_file.path)
+                print(f"[Video cleanup] Deleted video: {instance.video_file.path}")
+        
+        if instance.video_thumbnail:
+            if os.path.isfile(instance.video_thumbnail.path):
+                os.remove(instance.video_thumbnail.path)
+                print(f"[Video cleanup] Deleted thumbnail: {instance.video_thumbnail.path}")
+    except Exception as e:
+        print(f"[Video cleanup error] {e}")
 
 # ----------------
-# Optimization
+# Image Optimization
 # ----------------
 @receiver(post_save, sender=Blog)
-def optimize_images(sender, instance, **kwargs):
+def optimize_images(sender, instance, created, **kwargs):
+    """Optimize and resize featured images"""
     if not instance.featured_image:
         return
 
@@ -192,6 +210,104 @@ def optimize_images(sender, instance, **kwargs):
         except Exception as e:
             print(f"[Cleanup original error] {e}")
 
+# ----------------
+# Video Processing - FIXED VERSION
+# ----------------
+@receiver(post_save, sender=Blog)
+def process_video_metadata(sender, instance, created, update_fields, **kwargs):
+    """
+    Extract video metadata like duration and generate thumbnail
+    Only runs if video_file exists and duration is not set
+    
+    FIXED ISSUES:
+    1. Added update_fields parameter to prevent infinite loop
+    2. Added check to skip if already processing
+    3. Import errors handled gracefully
+    """
+    # CRITICAL FIX 1: Skip if this save was triggered by our update
+    if update_fields is not None and 'video_duration' in update_fields:
+        return
+    
+    # Skip if no video or already processed
+    if not instance.video_file or instance.video_duration:
+        return
+    
+    # CRITICAL FIX 2: Check if moviepy is installed
+    try:
+        from moviepy import VideoFileClip
+    except ImportError:
+        print("[Video processing] moviepy not installed. Run: pip install moviepy")
+        return
+    
+    try:
+        from datetime import timedelta
+        
+        # Get video file path
+        video_path = instance.video_file.path
+        
+        # Check if file exists
+        if not os.path.isfile(video_path):
+            print(f"[Video processing] Video file not found: {video_path}")
+            return
+        
+        print(f"[Video processing] Processing video for: {instance.title}")
+        
+        # Open video
+        clip = VideoFileClip(video_path)
+        
+        # Extract duration
+        duration = timedelta(seconds=int(clip.duration))
+        print(f"[Video processing] Duration: {duration}")
+        
+        # Generate thumbnail at 1 second (if not already set)
+        thumbnail_generated = False
+        if not instance.video_thumbnail:
+            try:
+                # Get frame at 1 second (or 0 if video is shorter)
+                frame_time = min(1, clip.duration - 0.1)
+                frame = clip.get_frame(frame_time)
+                img = Image.fromarray(frame)
+                
+                # Optimize thumbnail
+                img.thumbnail((1280, 720), Image.LANCZOS)
+                
+                # Save thumbnail
+                thumb_io = BytesIO()
+                img.save(thumb_io, format='JPEG', quality=85, optimize=True)
+                thumb_io.seek(0)
+                
+                thumb_name = f"{instance.slug}-video-thumb.jpg"
+                instance.video_thumbnail.save(
+                    thumb_name,
+                    ContentFile(thumb_io.read()),
+                    save=False
+                )
+                thumbnail_generated = True
+                print(f"[Video processing] Thumbnail generated: {thumb_name}")
+            except Exception as thumb_error:
+                print(f"[Video processing] Thumbnail generation failed: {thumb_error}")
+        
+        # Close the video clip
+        clip.close()
+        
+        # CRITICAL FIX 3: Use update_fields to prevent triggering signal again
+        update_data = {'video_duration': duration}
+        if thumbnail_generated and instance.video_thumbnail:
+            update_data['video_thumbnail'] = instance.video_thumbnail.name
+        
+        Blog.objects.filter(pk=instance.pk).update(**update_data)
+        
+        print(f"[Video processing] Successfully processed video for: {instance.title}")
+        
+    except Exception as e:
+        print(f"[Video processing error] {e}")
+        import traceback
+        traceback.print_exc()
+        # Don't fail the save if video processing fails
+
+# ----------------
+# Comment Notifications
+# ----------------
 @receiver(post_save, sender=Comment)
 def send_comment_notifications(sender, instance, created, **kwargs):
     """Send notifications when new comments or replies are posted"""
@@ -200,7 +316,7 @@ def send_comment_notifications(sender, instance, created, **kwargs):
     
     from django.contrib.contenttypes.models import ContentType
     from blogs.models import Blog
-    from django.utils.html import strip_tags  # ADD THIS
+    from django.utils.html import strip_tags
     
     # Get the blog post
     blog_content_type = ContentType.objects.get_for_model(Blog)
@@ -209,7 +325,7 @@ def send_comment_notifications(sender, instance, created, **kwargs):
         blog_post = instance.content_object
         
         # Clean comment content
-        clean_content = strip_tags(instance.content)[:100]  # ADD THIS
+        clean_content = strip_tags(instance.content)[:100]
         
         # If this is a reply to another comment
         if instance.parent:
@@ -227,7 +343,7 @@ def send_comment_notifications(sender, instance, created, **kwargs):
                     user=parent_author,
                     notif_type='comment_reply',
                     title=f"{instance.user.username} replied to your comment",
-                    message=clean_content,  # CHANGED
+                    message=clean_content,
                     url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
                     blog_post=blog_post,
                     comment=instance,
@@ -236,7 +352,7 @@ def send_comment_notifications(sender, instance, created, **kwargs):
                 send_push_notification(
                     user=parent_author,
                     title=notification.title,
-                    body=clean_content,  # CHANGED
+                    body=clean_content,
                     url=notification.url,
                 )
                 
@@ -259,7 +375,7 @@ def send_comment_notifications(sender, instance, created, **kwargs):
                     user=post_author,
                     notif_type='new_comment',
                     title=f"{instance.user.username} commented on your post",
-                    message=f'"{blog_post.title}": {clean_content}',  # CHANGED
+                    message=f'"{blog_post.title}": {clean_content}',
                     url=blog_post.get_absolute_url() if hasattr(blog_post, 'get_absolute_url') else '/',
                     blog_post=blog_post,
                     comment=instance,

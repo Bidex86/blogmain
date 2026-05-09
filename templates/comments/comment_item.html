@@ -27,13 +27,13 @@
         
         <div class="comment-actions">
             {% if user.is_authenticated %}
-                <!-- Like button - FIXED: Use template filter -->
+                <!-- Like button - FIXED: Like count OUTSIDE button so JavaScript can find it -->
                 <form method="post" action="{% url 'comments:like_comment' comment.id %}" class="like-form inline-form">
                     {% csrf_token %}
-                    <button type="submit" class="btn-like {% if comment|user_has_liked:user %}liked{% endif %}">
-                        <i class="fas fa-thumbs-up"></i> 
-                        <span class="like-count">{{ comment.likes.count }}</span>
+                    <button type="submit" class="btn-like {% if comment|user_has_liked:user %}liked{% endif %}" aria-label="Like comment" aria-pressed="{% if comment|user_has_liked:user %}true{% else %}false{% endif %}">
+                        <i class="fas fa-thumbs-up"></i>
                     </button>
+                    <span class="like-count">{{ comment.likes.count }}</span>
                 </form>
                 
                 <!-- Reply button -->

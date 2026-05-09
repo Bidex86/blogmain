@@ -67,21 +67,31 @@ INSTALLED_APPS = [
 ]
 
 # MIDDLEWARE - Cleaned up version
+# MIDDLEWARE - CORRECTED ORDER (Replace your MIDDLEWARE section)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    
+    # Cache middleware MUST come right after SessionMiddleware
+    'django.middleware.cache.UpdateCacheMiddleware',  # MUST be before CommonMiddleware
+    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    # Custom middleware
+    
+    # Custom middleware (after authentication)
     'accounts.middleware.AuthAwareCacheMiddleware',
     'dashboards.middleware.AdminNoCacheMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
-    'comments.middleware.CommentRateLimitMiddleware',
+    
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
+    
+    # FetchFromCacheMiddleware MUST be last (or near last)
+    'django.middleware.cache.FetchFromCacheMiddleware',  # MUST be after all other middleware
+    
+    # Comment rate limiting - TEMPORARILY DISABLED FOR TESTING
+    # 'comments.middleware.CommentRateLimitMiddleware',  # Enable after testing works
 ]
 
 ROOT_URLCONF = 'blogmain.urls'
@@ -209,7 +219,8 @@ else:
 
 # Cache middleware settings
 CACHE_MIDDLEWARE_ALIAS = 'default'
-CACHE_MIDDLEWARE_SECONDS = 300 if not DEBUG else 0  # 5 minutes in production, disabled in debug
+#CACHE_MIDDLEWARE_SECONDS = 300 if not DEBUG else 0  # 5 minutes in production, disabled in debug
+CACHE_MIDDLEWARE_SECONDS = 0  # Disable cache middleware temporarily
 CACHE_MIDDLEWARE_KEY_PREFIX = 'blog'
 CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
 
@@ -285,6 +296,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# File upload limits (100MB for videos)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
+
 # Pipeline configuration in settings.py
 PIPELINE = {
     'PIPELINE_ENABLED': not DEBUG,  # Enable compression in production only
@@ -312,6 +327,7 @@ PIPELINE = {
                 'css/advertisements.css',
                 'css/analytics-ads.css',
                 'css/notifications.css',  # ADD THIS
+                'css/video.css',
             ),
             'output_filename': 'css/main.min.css',
             'extra_context': {
@@ -637,6 +653,17 @@ LOGGING['loggers']['ads'] = {
     'handlers': ['file'],
     'level': 'INFO',
     'propagate': True,
+}
+
+LOGS_DIR = BASE_DIR / 'logs'
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
+# Add comments logger
+LOGGING['loggers']['comments'] = {
+    'handlers': ['file', 'console'],
+    'level': 'DEBUG',  # Set to DEBUG for troubleshooting
+    'propagate': False,
 }
 
 # CKEditor 5 Configuration

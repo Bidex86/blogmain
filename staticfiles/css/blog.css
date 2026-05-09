@@ -810,6 +810,8 @@
   overflow: hidden;
 }
 
+
+
 .article-info h5 a:hover {
   color: #007bff;
 }
@@ -892,6 +894,66 @@
 .popular-article small {
   color: #666;
   font-size: 0.75em;
+}
+
+/* Video overlay badge for related posts */
+.video-overlay-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.video-overlay-badge i {
+    color: white;
+    font-size: 24px;
+}
+
+.related-card:hover .video-overlay-badge {
+    background: rgba(102, 126, 234, 0.9);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Video badge for sidebar thumbnails */
+.sidebar-thumbnail {
+    position: relative;
+}
+
+.video-badge-small {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.video-badge-small i {
+    color: white;
+    font-size: 12px;
+}
+
+/* Video duration badge in post-meta */
+.video-duration {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-weight: 600;
 }
 
 /* ========================================

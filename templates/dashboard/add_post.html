@@ -705,38 +705,6 @@ function generateAnalysisHTML(analysis) {
         return suggestionsHTML;
     }
 });
-
-document.getElementById('analyze-content').addEventListener('click', function() {
-    const formData = {
-        title: document.getElementById('id_title').value,
-        content: document.getElementById('id_blog_body').value,
-        focus_keyword: document.getElementById('id_focus_keyword').value,
-        meta_description: document.getElementById('id_meta_description').value
-    };
-    
-    this.textContent = 'Analyzing...';
-    this.disabled = true;
-    
-    fetch('/analyze-content/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.analysis) {
-            // Update the analysis section with new data
-            updateAnalysisDisplay(data.analysis);
-        }
-    })
-    .finally(() => {
-        this.textContent = 'Analyze Content with AI';
-        this.disabled = false;
-    });
-});
 </script>
 
 {% endblock %}

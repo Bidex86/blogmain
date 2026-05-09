@@ -1,10 +1,11 @@
-# admin.py - Clean version without repetitions
+# admin.py - Updated with video support (minimal changes to your existing file)
 
 from django.contrib import admin
 from django.forms import ModelForm
+from django.utils.html import format_html
 from .models import Blog, Category
 
-# Custom form for better tags widget
+# Custom form for better tags widget (UNCHANGED)
 class BlogAdminForm(ModelForm):
     class Meta:
         model = Blog
@@ -24,24 +25,51 @@ class BlogAdminForm(ModelForm):
                 'New tags will be created automatically.'
             )
 
-# Main Blog admin class
-# Update your existing BlogAdmin fieldsets to include news fields:
-
+# Main Blog admin class - UPDATED with video fields
 class BlogAdmin(admin.ModelAdmin):
     form = BlogAdminForm
-    list_display = ['title', 'category', 'author', 'status', 'is_breaking_news', 'news_priority', 'created_at', 'get_tags']
-    list_filter = ['status', 'category', 'is_featured', 'is_breaking_news', 'news_priority', 'created_at', 'tags']
+    
+    # UPDATED: Add content_type to list_display
+    list_display = [
+        'title', 
+        'content_type',  # NEW
+        'category', 
+        'author', 
+        'status', 
+        'is_breaking_news', 
+        'news_priority', 
+        'created_at', 
+        'get_tags'
+    ]
+    
+    # UPDATED: Add content_type to list_filter
+    list_filter = [
+        'status', 
+        'content_type',  # NEW
+        'category', 
+        'is_featured', 
+        'is_breaking_news', 
+        'news_priority', 
+        'created_at', 
+        'tags'
+    ]
+    
     search_fields = ['title', 'blog_body', 'tags__name', 'news_keywords']
     prepopulated_fields = {'slug': ('title',)}
     list_per_page = 20
     
-    # Updated fieldsets with news fields
+    # UPDATED: Add Video Content section to fieldsets
     fieldsets = (
         ('Content', {
             'fields': ('title', 'slug', 'category', 'blog_body', 'short_description')
         }),
         ('Media', {
             'fields': ('featured_image', 'image_alt_text')
+        }),
+        ('Video Content (Optional)', {  # NEW SECTION
+            'fields': ('video_file', 'video_url', 'video_thumbnail', 'video_duration'),
+            'classes': ('collapse',),
+            'description': 'Upload video file OR provide YouTube/Vimeo URL (not both). Content type is auto-detected.'
         }),
         ('SEO & Tags', {
             'fields': ('seo_keywords', 'tags', 'focus_keyword', 'meta_title', 'meta_description'),
@@ -58,8 +86,14 @@ class BlogAdmin(admin.ModelAdmin):
         }),
     )
     
-    # Add custom admin actions
-    actions = ['mark_as_breaking_news', 'exclude_from_news_sitemap', 'include_in_news_sitemap']
+    # Add custom admin actions (UNCHANGED)
+    actions = [
+        'mark_as_breaking_news', 
+        'exclude_from_news_sitemap', 
+        'include_in_news_sitemap',
+        'duplicate_with_tags',
+        'clear_all_tags'
+    ]
     
     def mark_as_breaking_news(self, request, queryset):
         updated = queryset.update(is_breaking_news=True, news_priority='breaking')
@@ -76,7 +110,6 @@ class BlogAdmin(admin.ModelAdmin):
         self.message_user(request, f'{updated} articles included in news sitemap.')
     include_in_news_sitemap.short_description = "Include in news sitemap"
 
-
     def get_tags(self, obj):
         """Display tags in list view"""
         tags = obj.tags.all()
@@ -87,9 +120,6 @@ class BlogAdmin(admin.ModelAdmin):
             tag_names.append(f"... +{tags.count() - 3} more")
         return ", ".join(tag_names)
     get_tags.short_description = 'Tags'
-
-    # Custom actions
-    actions = ['duplicate_with_tags', 'clear_all_tags']
 
     def duplicate_with_tags(self, request, queryset):
         """Custom action to duplicate posts with their tags"""
@@ -110,7 +140,7 @@ class BlogAdmin(admin.ModelAdmin):
         self.message_user(request, f"Cleared tags from {queryset.count()} blog posts.")
     clear_all_tags.short_description = "Clear all tags from selected blogs"
 
-# Category admin
+# Category admin (UNCHANGED)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['category_name', 'slug', 'created_at']
     prepopulated_fields = {'slug': ('category_name',)}

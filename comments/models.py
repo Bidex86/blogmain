@@ -1,4 +1,4 @@
-# comments/models.py - Fixed manager methods
+# comments/models.py - Fixed with depth as a field
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -25,6 +25,7 @@ class CommentManager(models.Manager):
     def pending_moderation(self):
         """Get comments awaiting moderation"""
         return self.filter(is_approved=False, is_flagged=False)
+
 
 class Comment(models.Model):
     """Generic comment model that can attach to any Django model"""
@@ -59,6 +60,9 @@ class Comment(models.Model):
     is_approved = models.BooleanField(default=True)
     is_flagged = models.BooleanField(default=False)
     
+    # FIXED: Depth as an actual field instead of property
+    depth = models.PositiveIntegerField(default=0, editable=False)
+    
     # Custom manager
     objects = CommentManager()
     
@@ -74,28 +78,29 @@ class Comment(models.Model):
         return f'Comment by {self.user.username} on {self.content_object}'
     
     def save(self, *args, **kwargs):
-        """Custom save method to track edits"""
-        if self.pk:  # If updating existing comment
+        """Custom save method to track edits and calculate depth"""
+        # Track edits
+        if self.pk:
             try:
                 old_comment = Comment.objects.get(pk=self.pk)
                 if old_comment.comment != self.comment:
                     self.is_edited = True
             except Comment.DoesNotExist:
                 pass
+        
+        # Calculate and set depth
+        if self.parent:
+            self.depth = self.parent.depth + 1
+        else:
+            self.depth = 0
+        
         super().save(*args, **kwargs)
-    
-    @property
-    def depth(self):
-        """Calculate nesting depth (0 = top level, 1 = first reply, etc.)"""
-        if not self.parent:
-            return 0
-        return self.parent.depth + 1
     
     @property 
     def max_depth_reached(self):
         """Check if maximum nesting depth is reached"""
         max_depth = getattr(settings, 'COMMENTS_MAX_DEPTH', 4)
-        return self.depth >= max_depth
+        return self.depth >= max_depth - 1
     
     def get_root_comment(self):
         """Get the top-level comment of this thread"""
@@ -120,7 +125,7 @@ class Comment(models.Model):
             return timezone.now() <= deadline
         return True
 
-# Keep other models (CommentFlag, CommentLike) as they are...
+
 class CommentFlag(models.Model):
     """Model for flagging inappropriate comments"""
     REASON_CHOICES = [
@@ -144,6 +149,7 @@ class CommentFlag(models.Model):
     
     def __str__(self):
         return f'Flag on comment {self.comment.id} by {self.user.username}'
+
 
 class CommentLike(models.Model):
     """Model for liking/upvoting comments"""

@@ -20,6 +20,7 @@ from .sitemaps import NewsSitemap
 from blogs.ai_content import AIContentIntelligence
 from blogs.voice_search import VoiceSearchOptimizer
 from blogs.analytics import UserBehaviorAnalytics
+from django.utils import timezone
 
 
 
@@ -162,7 +163,7 @@ def posts_by_category(request, category_slug):
     }
     return render(request, 'posts_by_category.html', context)
 
-@cache_page(60 * 15)
+@never_cache  # Remove @cache_page decorator
 def blogs(request, category_slug, slug):
     # OPTIMIZED: Get category and post with select_related
     category = get_object_or_404(Category, slug=category_slug)
@@ -221,9 +222,18 @@ def blogs(request, category_slug, slug):
         id=single_blog.id
     ).order_by('-created_at')[:4]
 
-    # OPTIMIZED: Comments with select_related for user
-    # Get comments for this post
+    # Get content type for comments
     content_type = ContentType.objects.get_for_model(Blog)
+    
+    # Fetch FRESH comments - NO CACHING
+    comments = Comment.objects.filter(
+        content_type=content_type,
+        object_id=single_blog.id,
+        parent__isnull=True,  # Only top-level comments
+        is_approved=True  # Only approved comments
+    ).select_related('user').prefetch_related(
+        'children__user'  # Prefetch replies with user info
+    ).order_by('-created_at')
 
     # Get all categories for sidebar navigation
     categories = Category.objects.all().order_by('category_name')
@@ -240,7 +250,6 @@ def blogs(request, category_slug, slug):
         {'name': single_blog.title, 'url': None}
     ]
 
-
     context = {
         'category': category,
         'posts': posts,
@@ -249,7 +258,7 @@ def blogs(request, category_slug, slug):
         'related_posts': related_posts,
         'content_type_id': content_type.id,
         'comment_form': CommentForm(content_object=post),
-        #'comments': comments_page,
+        'comments': comments,  # Add fresh comments to context
         'breadcrumbs': breadcrumbs,
         'categories': categories,  # For sidebar navigation
         'trending_posts': trending_posts,  # For sidebar
@@ -267,7 +276,6 @@ def blogs(request, category_slug, slug):
         'analytics_enabled': settings.ANALYTICS_ENABLED
     }
     return render(request, 'blogs.html', context)
-
 def search(request):
     keyword = request.GET.get('keyword')
     

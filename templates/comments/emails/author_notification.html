@@ -1,0 +1,78 @@
+<!-- comments/templates/comments/emails/author_notification.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Comment on Your Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .comment-box {
+            background: white;
+            padding: 15px;
+            border-left: 4px solid #28a745;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 style="margin: 0;">New Comment on Your Post</h2>
+    </div>
+    
+    <div class="content">
+        <p>Hi <strong>{{ author.get_full_name|default:author.username }}</strong>!</p>
+        
+        <p><strong>{{ comment_user.get_full_name|default:comment_user.username }}</strong> commented on your post:</p>
+        
+        <div class="comment-box">
+            <p><strong>Post:</strong> {{ object }}</p>
+            <hr style="border: none; border-top: 1px solid #dee2e6; margin: 10px 0;">
+            <p><strong>Comment:</strong></p>
+            <p>{{ comment.comment }}</p>
+        </div>
+        
+        <a href="{{ object.get_absolute_url }}#comment-{{ comment.id }}" class="button">View Comment</a>
+        
+        <p style="margin-top: 20px;">Reply to engage with your audience!</p>
+    </div>
+    
+    <div class="footer">
+        <p>You're receiving this because you have email notifications enabled for comments on your posts.</p>
+        <p>To change your notification preferences, visit your profile settings.</p>
+    </div>
+</body>
+</html>

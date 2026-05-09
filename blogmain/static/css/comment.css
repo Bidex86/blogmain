@@ -246,44 +246,107 @@
     font-size: 0.8rem;
 }
 
-/* Like Button */
+/* Comment Like Button Styles - Add this to your comment CSS */
+
+/* Like form - Display button and count inline */
 .like-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 12px;
+}
+
+/* Like button */
+.btn-like {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-like:hover {
+    background: #f8f9fa;
+    color: #007bff;
+}
+
+.btn-like.liked {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.btn-like:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Like count */
+.like-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #495057;
+    min-width: 20px;
+    text-align: left;
+}
+
+/* Inline forms (like and delete) */
+.inline-form {
     display: inline-block;
     margin: 0;
 }
 
-.btn-like {
-    background: none;
-    border: none;
-    color: #6c757d;
-    font-size: 0.85rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* Comment actions container */
+.comment-actions {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e9ecef;
 }
 
-.btn-like:hover {
-    background: #e3f2fd;
-    color: #1976d2;
+/* Action buttons */
+.btn-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
-.btn-like.liked {
-    background: #e3f2fd;
-    color: #1976d2;
+.btn-action:hover {
+    background: #f8f9fa;
+    color: #007bff;
+    text-decoration: none;
 }
 
-.btn-like.liked i {
-    color: #1976d2;
+.btn-action i {
+    font-size: 12px;
 }
 
-.like-count {
-    font-weight: 500;
+/* Delete button special styling */
+.delete-btn:hover {
+    color: #dc3545;
 }
 
+/* Flag button special styling */
+.flag-btn:hover {
+    color: #ffc107;
+}
 /* Inline forms for actions */
 .inline-form {
     display: inline-block;

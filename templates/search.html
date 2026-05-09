@@ -43,12 +43,22 @@
             <div class="row">
                 {% for post in page_obj %}
                     <div class="col-lg-6 col-md-12 mb-4">
-                        <div class="card border-0 shadow-sm h-100">
+                        <div class="card border-0 shadow-sm h-100{% if post.is_video_post %}has-video-badge{% endif %}">
                             {% if post.featured_image %}
-                                <img src="{{ post.featured_image.url }}" 
-                                     class="card-img-top" 
-                                     alt="{{ post.image_alt_text|default:post.title }}"
-                                     style="height: 200px; object-fit: cover;">
+                                <div style="position: relative;">
+                                    {% if post.is_video_post %}
+                                        <div class="video-overlay-badge">
+                                        <i class="fas fa-play-circle"></i>
+                                        </div>
+                                        <div class="video-type-label">
+                                        VIDEO
+                                        </div>
+                                    {% endif %}
+                                    <img src="{{ post.featured_image.url }}" 
+                                        class="card-img-top" 
+                                        alt="{{ post.image_alt_text|default:post.title }}"
+                                        style="height: 200px; object-fit: cover;">
+                                </div>             
                             {% endif %}
                             
                             <div class="card-body d-flex flex-column">
@@ -63,6 +73,9 @@
                                     <small class="text-muted">
                                         <i class="fas fa-calendar"></i> {{ post.created_at|timesince }} ago |
                                         <i class="fas fa-user"></i> {{ post.author }} |
+                                        {% if post.is_video_post and post.video_duration %}
+                                            <i class="fas fa-video"></i> {{ post.video_duration|date:"H:i:s" }} |
+                                        {% endif %}
                                         <i class="fas fa-folder"></i> 
                                         <a href="{% url 'posts_by_category' post.category.slug %}" 
                                            class="text-muted">{{ post.category.category_name }}</a>

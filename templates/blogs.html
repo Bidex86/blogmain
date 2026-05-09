@@ -15,22 +15,62 @@
 {% block meta_keywords %}{{ single_blog.tags.all|join:", " }}{% endblock %}
 {% block og_title %}{{ single_blog.title }}{% endblock %}
 {% block og_description %}{{ single_blog.short_description|striptags|truncatewords:25 }}{% endblock %}
-{% block og_image %}{% if single_blog.featured_image %}{{ single_blog.featured_image.url }}{% endif %}{% endblock %}
+
+{# UPDATED: Use video thumbnail for video posts #}
+{% block og_image %}
+  {% if single_blog.is_video_post and single_blog.video_thumbnail_url %}
+    {{ single_blog.video_thumbnail_url }}
+  {% elif single_blog.featured_image %}
+    {{ single_blog.featured_image.url }}
+  {% endif %}
+{% endblock %}
+
 {% block twitter_title %}{{ single_blog.title }}{% endblock %}
 {% block twitter_description %}{{ single_blog.short_description|striptags|truncatewords:25 }}{% endblock %}
-{% block twitter_image %}{% if single_blog.featured_image %}{{ single_blog.featured_image.url }}{% endif %}{% endblock %}
+
+{# UPDATED: Use video thumbnail for Twitter cards #}
+{% block twitter_image %}
+  {% if single_blog.is_video_post and single_blog.video_thumbnail_url %}
+    {{ single_blog.video_thumbnail_url }}
+  {% elif single_blog.featured_image %}
+    {{ single_blog.featured_image.url }}
+  {% endif %}
+{% endblock %}
 
 {% block title %}{{ single_blog.title }} | My Blog{% endblock %}
 
 {% block head %}
 <link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+{# UPDATED: Add video-specific Open Graph tags #}
+{% if single_blog.is_video_post %}
+<meta property="og:type" content="video.other">
+<meta property="og:video:type" content="text/html">
+{% if single_blog.has_uploaded_video %}
+<meta property="og:video" content="{{ request.scheme }}://{{ request.get_host }}{{ single_blog.video_file.url }}">
+<meta property="og:video:secure_url" content="{{ request.scheme }}://{{ request.get_host }}{{ single_blog.video_file.url }}">
+<meta property="og:video:type" content="video/mp4">
+{% elif single_blog.has_embedded_video %}
+<meta property="og:video" content="{{ single_blog.get_video_embed_code }}">
+<meta property="og:video:secure_url" content="{{ single_blog.get_video_embed_code }}">
+{% endif %}
+{% if single_blog.video_duration %}
+<meta property="og:video:duration" content="{{ single_blog.video_duration.total_seconds|floatformat:0 }}">
+{% endif %}
+{% else %}
+<meta property="og:type" content="article">
+{% endif %}
+
 <meta property="og:title" content="{{ single_blog.title }}">
 <meta property="og:description" content="{{ single_blog.short_description|striptags|truncatewords:20 }}">
-{% if single_blog.featured_image %}
+
+{% if single_blog.is_video_post and single_blog.video_thumbnail_url %}
+<meta property="og:image" content="{{ single_blog.video_thumbnail_url }}">
+{% elif single_blog.featured_image %}
 <meta property="og:image" content="{{ single_blog.featured_image.url }}">
 {% endif %}
+
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
-<meta property="og:type" content="article">
 <meta property="article:published_time" content="{{ single_blog.created_at|date:'c' }}">
 <meta property="article:modified_time" content="{{ single_blog.updated_at|date:'c' }}">
 <meta property="article:author" content="{{ single_blog.author.get_full_name|default:single_blog.author.username }}">
@@ -38,6 +78,16 @@
 {% for tag in single_blog.tags.all %}
 <meta property="article:tag" content="{{ tag.name }}">
 {% endfor %}
+
+{# UPDATED: Add Twitter video card for video posts #}
+{% if single_blog.is_video_post %}
+<meta name="twitter:card" content="player">
+<meta name="twitter:player" content="{{ request.build_absolute_uri }}">
+<meta name="twitter:player:width" content="1280">
+<meta name="twitter:player:height" content="720">
+{% else %}
+<meta name="twitter:card" content="summary_large_image">
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -50,7 +100,14 @@
         <div class="post-meta">
           <span class="author">By {{ single_blog.author.get_full_name|default:single_blog.author.username }}</span>
           <span class="date">{{ single_blog.created_at|date:"F d, Y" }}</span>
-          <span class="reading-time">{{ reading_time }} min read</span>
+          
+          {# UPDATED: Show video duration for video posts, reading time for articles #}
+          {% if single_blog.is_video_post and single_blog.video_duration %}
+            <span class="video-duration">{{ single_blog.video_duration|date:"H:i:s" }} video</span>
+          {% else %}
+            <span class="reading-time">{{ reading_time }} min read</span>
+          {% endif %}
+          
           <span class="view-count">{{ single_blog.views }} views</span>
           <span class="comment-count-meta">{% comment_count_for single_blog %} comments</span>
         </div>
@@ -75,17 +132,24 @@
         </div>
       </div>
 
-      {% if single_blog.featured_image %}
-      <figure class="featured-image">
-        {% seo_responsive_image single_blog alt="Featured image for '{{ single_blog.title }}'" css_class="img-featured-post" context_name="full" %}
-        {% if single_blog.featured_image_caption %}
-          <figcaption>{{ single_blog.featured_image_caption }}</figcaption>
-        {% endif %}
-      </figure>
+      {# ============================================ #}
+      {# NEW: VIDEO PLAYER OR FEATURED IMAGE         #}
+      {# ============================================ #}
+      {% if single_blog.is_video_post %}
+        {# Show video player for video posts #}
+        {% include 'video_player.html' with post=single_blog %}
+      {% elif single_blog.featured_image %}
+        {# Show featured image for regular articles #}
+        <figure class="featured-image">
+          {% seo_responsive_image single_blog alt="Featured image for '{{ single_blog.title }}'" css_class="img-featured-post" context_name="full" %}
+          {% if single_blog.featured_image_caption %}
+            <figcaption>{{ single_blog.featured_image_caption }}</figcaption>
+          {% endif %}
+        </figure>
       {% endif %}
+      {# ============================================ #}
 
       <!-- Process auto-link but separate the content from inline links -->
-      <!-- Replace the content section in your blogs.html -->
       {% auto_link_bundle single_blog.blog_body related_posts as auto %}
 
       <section class="blog-content">
@@ -163,6 +227,13 @@
           {% for post in related_posts %}
             <div class="related-card">
               <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
+                {# UPDATED: Show video badge on related video posts #}
+                {% if post.is_video_post %}
+                  <div class="video-overlay-badge">
+                    <i class="fas fa-play-circle"></i>
+                  </div>
+                {% endif %}
+                
                 {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-related-post" context_name="post" %}
                 <h5>{{ post.title }}</h5>
                 <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
@@ -187,7 +258,15 @@
       <h3>Recent Articles</h3>
       {% for post in posts %}
         <div class="sidebar-article">
-          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-post" context_name="sidebar" %}
+          {# UPDATED: Add video badge to sidebar video posts #}
+          <div class="sidebar-thumbnail">
+            {% if post.is_video_post %}
+              <div class="video-badge-small">
+                <i class="fas fa-play"></i>
+              </div>
+            {% endif %}
+            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-post" context_name="sidebar" %}
+          </div>
           <div class="article-info">
             <h5><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h5>
             <small class="post-meta">
@@ -226,7 +305,14 @@
       <h3>Popular Posts</h3>
       {% for post in trending_posts|slice:":3" %}
         <div class="popular-article">
-          {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-popular-post" context_name="sidebar" %}
+          <div class="sidebar-thumbnail">
+            {% if post.is_video_post %}
+              <div class="video-badge-small">
+                <i class="fas fa-play"></i>
+              </div>
+            {% endif %}
+            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-popular-post" context_name="sidebar" %}
+          </div>
           <div class="article-info">
             <h6><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h6>
             <small>{{ post.views }} views</small>
@@ -241,7 +327,6 @@
     </div>
   </aside>
 </div>
-
 {% endblock %}
 
 {% block jsonld %}

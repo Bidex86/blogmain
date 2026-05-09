@@ -28,7 +28,14 @@
                 {% for post in trending_posts %}
                     {% if post.slug %}
                         <div class="sidebar-item">
-                            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context_name="sidebar" loading="lazy" %}
+                            <div style="position: relative;">
+                                {% if post.is_video_post %}
+                                <div class="video-badge-small">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                                {% endif %}
+                                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-item" context_name="sidebar" loading="lazy" %}
+                            </div>
                             <div class="sidebar-text">
                                 <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
                                 <span class="post-date">{{ post.created_at|timesince }} ago</span>
@@ -43,7 +50,12 @@
             <!-- MAIN FEATURED POSTS -->
             <main class="main-content">
                 {% for post in page_obj %}
-                    <article class="featured-post">
+                    <article class="featured-post{% if post.is_video_post %}has-video-badge{% endif %}" style="position: relative;">
+                        {% if post.is_video_post %}
+                            <div class="video-overlay-badge">
+                            <i class="fas fa-play-circle"></i>
+                            </div>
+                        {% endif %}
                         {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-featured-post" context_name="full" loading="lazy" %}
                         <h3>
                             <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a>
@@ -60,10 +72,17 @@
                 {% for post in editors_picks %}
                     {% if post.slug %}
                         <div class="sidebar-item">
-                            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context_name="sidebar" loading="lazy" %}
+                            <div style="position: relative;">
+                                {% if post.is_video_post %}
+                                <div class="video-badge-small">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                                {% endif %}
+                                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context_name="sidebar" loading="lazy" %}
+                            </div>
                             <div class="sidebar-text">
-                                <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
-                                <span class="post-date">{{ post.created_at|timesince }} ago</span>
+                            <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title|truncatewords:8 }}</a>
+                            <span class="post-date">{{ post.created_at|timesince }} ago</span>
                             </div>
                         </div>
                     {% endif %}

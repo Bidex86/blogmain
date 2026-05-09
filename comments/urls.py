@@ -1,4 +1,4 @@
-# comments/urls.py - Complete URL configuration
+# comments/urls.py - Fixed version (no duplicates)
 from django.urls import path
 from . import views
 
@@ -9,18 +9,18 @@ urlpatterns = [
     path('add/', views.add_comment, name='add_comment'),
     path('<int:comment_id>/edit/', views.edit_comment, name='edit_comment'),
     path('<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
-    path('<int:comment_id>/flag/', views.flag_comment, name='flag_comment'),
     path('<int:comment_id>/like/', views.like_comment, name='like_comment'),
+    path('<int:comment_id>/flag/', views.flag_comment, name='flag_comment'),
+    path('<int:comment_id>/replies/', views.get_comment_replies, name='get_comment_replies'),
+    
+    # User comment management
+    path('user/', views.user_comments, name='user_comments'),
     
     # AJAX endpoints
-    path('api/<int:comment_id>/replies/', views.get_comment_replies, name='comment_replies'),
     path('api/search/', views.search_comments, name='search_comments'),
     path('api/load-more/', views.load_more_comments, name='load_more_comments'),
     path('api/stats/', views.comment_stats, name='comment_stats'),
     path('api/post/<int:post_id>/stats/', views.comment_stats, name='post_comment_stats'),
-    
-    # User comment management
-    path('my-comments/', views.user_comments, name='user_comments'),
     
     # Moderation URLs (admin/staff only)
     path('admin/moderate/', views.moderate_comments, name='moderate_comments'),

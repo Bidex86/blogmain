@@ -1,0 +1,199 @@
+{% comment %}
+Video Player Component - SEO Optimized
+Matches all SEO features from blogs.html
+Usage: {% include 'video_player.html' with post=single_blog %}
+{% endcomment %}
+
+{% load static %}
+{% load pipeline %}
+{% stylesheet 'main' %}
+
+{% if post.is_video_post %}
+<!-- Video Content Badge -->
+<div class="content-type-badge video-badge">
+    <i class="fas fa-play-circle"></i> 
+    {% if post.content_type == 'video' %}
+        Video Content
+    {% elif post.content_type == 'mixed' %}
+        Video Article
+    {% endif %}
+</div>
+
+<!-- Main Video Container -->
+<div class="video-wrapper">
+    {% if post.has_uploaded_video %}
+        <!-- Uploaded Video Player -->
+        <div class="video-player-container" 
+             itemscope 
+             itemtype="https://schema.org/VideoObject">
+            
+            <video 
+                id="video-player-{{ post.id }}" 
+                class="video-player" 
+                controls 
+                preload="metadata"
+                poster="{{ post.video_thumbnail_url }}"
+                playsinline
+                aria-label="Video: {{ post.title }}">
+                
+                <source src="{{ post.video_file.url }}" type="video/mp4">
+                <source src="{{ post.video_file.url }}" type="video/webm">
+                
+                <!-- Accessibility fallback -->
+                <p>Your browser does not support the video tag. 
+                   <a href="{{ post.video_file.url }}" download>Download the video</a> instead.
+                </p>
+            </video>
+            
+            <!-- Hidden SEO metadata -->
+            <meta itemprop="name" content="{{ post.title }}">
+            <meta itemprop="description" content="{{ post.short_description|striptags|truncatewords:25 }}">
+            <meta itemprop="thumbnailUrl" content="{{ request.scheme }}://{{ request.get_host }}{{ post.video_thumbnail_url }}">
+            <meta itemprop="uploadDate" content="{{ post.created_at|date:'c' }}">
+            <meta itemprop="contentUrl" content="{{ request.scheme }}://{{ request.get_host }}{{ post.video_file.url }}">
+            {% if post.video_duration %}
+            <meta itemprop="duration" content="PT{{ post.video_duration.total_seconds|floatformat:0 }}S">
+            {% endif %}
+            <link itemprop="embedUrl" href="{{ request.build_absolute_uri }}">
+        </div>
+        
+        <!-- Video Information Bar -->
+        <div class="video-info-bar">
+            {% if post.video_duration %}
+            <span class="video-stat" title="Video duration">
+                <i class="far fa-clock"></i> 
+                <time itemprop="duration">{{ post.video_duration|date:"H:i:s" }}</time>
+            </span>
+            {% endif %}
+            
+            <span class="video-stat" title="View count">
+                <i class="far fa-eye"></i> 
+                <span itemprop="interactionCount">{{ post.views|default:0 }} views</span>
+            </span>
+            
+            <span class="video-stat" title="Upload type">
+                <i class="fas fa-video"></i> 
+                Uploaded Video
+            </span>
+            
+            <span class="video-stat" title="Published date">
+                <i class="far fa-calendar"></i> 
+                <time datetime="{{ post.created_at|date:'c' }}">
+                    {{ post.created_at|date:"M d, Y" }}
+                </time>
+            </span>
+        </div>
+        
+    {% elif post.has_embedded_video %}
+        <!-- Embedded Video (YouTube/Vimeo) -->
+        <div class="video-embed-container" 
+             itemscope 
+             itemtype="https://schema.org/VideoObject">
+            
+            <div class="video-embed-wrapper" style="position: relative; padding-bottom: 56.25%; height: 0; margin: 20px 0;">
+                <iframe 
+                    src="{{ post.get_video_embed_code }}"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                    loading="lazy"
+                    title="{{ post.title }}">
+                </iframe>
+            </div>
+            <!-- Hidden SEO metadata -->
+            <meta itemprop="name" content="{{ post.title }}">
+            <meta itemprop="description" content="{{ post.short_description|striptags|truncatewords:25 }}">
+            <meta itemprop="thumbnailUrl" content="{{ request.scheme }}://{{ request.get_host }}{{ post.video_thumbnail_url }}">
+            <meta itemprop="uploadDate" content="{{ post.created_at|date:'c' }}">
+        </div>
+        
+        <!-- Video Information Bar -->
+        <div class="video-info-bar">
+            <span class="video-stat" title="View count">
+                <i class="far fa-eye"></i> 
+                {{ post.views|default:0 }} views
+            </span>
+            
+            <span class="video-stat" title="Video platform">
+                <i class="fas fa-external-link-alt"></i> 
+                {{ post.video_type_display }}
+            </span>
+            
+            <span class="video-stat" title="Published date">
+                <i class="far fa-calendar"></i> 
+                <time datetime="{{ post.created_at|date:'c' }}">
+                    {{ post.created_at|date:"M d, Y" }}
+                </time>
+            </span>
+            
+            <!-- Watch on Platform Link -->
+            {% if post.video_url %}
+            <a href="{{ post.video_url }}" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="watch-external"
+               title="Watch on {{ post.video_type_display }}">
+                Watch on {{ post.video_type_display }} 
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Enhanced Video Schema (JSON-LD) - Separate from inline microdata -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  "name": "{{ post.title|escapejs }}",
+  "description": "{{ post.short_description|striptags|truncatewords:50|escapejs }}",
+  "thumbnailUrl": [
+    "{{ request.scheme }}://{{ request.get_host }}{{ post.video_thumbnail_url }}"
+  ],
+  "uploadDate": "{{ post.created_at|date:'c' }}",
+  {% if post.has_uploaded_video %}
+  "contentUrl": "{{ request.scheme }}://{{ request.get_host }}{{ post.video_file.url }}",
+  {% endif %}
+  "embedUrl": "{{ request.build_absolute_uri }}",
+  {% if post.video_duration %}
+  "duration": "PT{{ post.video_duration.total_seconds|floatformat:0 }}S",
+  {% endif %}
+  "author": {
+    "@type": "Person",
+    "name": "{{ post.author.get_full_name|default:post.author.username|escapejs }}",
+    "url": "{{ request.scheme }}://{{ request.get_host }}/author/{{ post.author.username }}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "My Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/logo.png' %}"
+    }
+  },
+  "interactionStatistic": {
+    "@type": "InteractionCounter",
+    "interactionType": { "@type": "WatchAction" },
+    "userInteractionCount": {{ post.views|default:0 }}
+  },
+  "keywords": "{{ post.tags.all|join:', '|escapejs }}",
+  "genre": "{{ post.category.category_name|escapejs }}",
+  "inLanguage": "en",
+  "isFamilyFriendly": "true",
+  "potentialAction": {
+    "@type": "WatchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "{{ request.build_absolute_uri }}"
+    }
+  }
+}
+</script>
+
+<!-- Video-specific CSS -->
+
+
+{% endif %}

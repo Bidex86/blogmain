@@ -1,329 +1,335 @@
-// static/js/comment.js - Enhanced comment functionality
+// static/js/comment.js - FIXED: Prevents double-click and race conditions
+
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Character counter for comment textareas
-    function setupCharacterCounter() {
-        const textareas = document.querySelectorAll('.comment-textarea, .reply-textarea');
-        textareas.forEach(textarea => {
-            const counter = textarea.parentElement.querySelector('.character-count');
-            if (counter) {
-                textarea.addEventListener('input', function() {
-                    const current = this.value.length;
-                    const max = this.getAttribute('maxlength') || 1000;
-                    counter.textContent = `${current}/${max}`;
-                    
-                    if (current > max * 0.9) {
-                        counter.style.color = '#dc3545';
-                    } else {
-                        counter.style.color = '#6c757d';
-                    }
-                });
-            }
-        });
+    // Get CSRF token
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     }
     
-    // Auto-resize textareas
-    function setupAutoResize() {
-        const textareas = document.querySelectorAll('[data-auto-resize="true"], .comment-textarea, .reply-textarea');
-        textareas.forEach(textarea => {
+    // Track pending requests to prevent double-clicks
+    const pendingLikeRequests = new Set();
+    
+    // Character counter for all textareas
+    const textareas = document.querySelectorAll('.comment-textarea, .reply-textarea');
+    textareas.forEach(textarea => {
+        const maxLength = parseInt(textarea.getAttribute('maxlength')) || 1000;
+        const counterElement = textarea.closest('.form-group')?.querySelector('.character-count') || 
+                              textarea.parentElement?.querySelector('.character-count');
+        
+        if (counterElement) {
+            updateCounter(textarea, counterElement, maxLength);
             textarea.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = this.scrollHeight + 'px';
+                updateCounter(this, counterElement, maxLength);
             });
+        }
+        
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
+    });
+    
+    function updateCounter(textarea, counter, maxLength) {
+        const currentLength = textarea.value.length;
+        counter.textContent = `${currentLength}/${maxLength}`;
+        
+        if (currentLength > maxLength * 0.9) {
+            counter.style.color = '#dc3545';
+            counter.style.fontWeight = '600';
+        } else {
+            counter.style.color = '#6c757d';
+            counter.style.fontWeight = 'normal';
+        }
     }
     
     // Reply button functionality
-    function setupReplyButtons() {
-        document.querySelectorAll('.reply-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const commentId = this.dataset.commentId;
-                const replyForm = document.getElementById(`reply-form-${commentId}`);
-                const allReplyForms = document.querySelectorAll('.reply-form-container');
-                
-                // Hide all other reply forms
-                allReplyForms.forEach(form => {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.reply-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.reply-btn');
+            const commentId = btn.getAttribute('data-comment-id');
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            
+            if (replyForm) {
+                document.querySelectorAll('.reply-form-container').forEach(form => {
                     if (form.id !== `reply-form-${commentId}`) {
                         form.style.display = 'none';
                     }
                 });
                 
-                // Toggle current reply form
-                if (replyForm) {
-                    replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-                    if (replyForm.style.display === 'block') {
-                        const textarea = replyForm.querySelector('textarea');
-                        if (textarea) {
-                            textarea.focus();
-                        }
-                    }
-                }
-            });
-        });
-    }
-    
-    // Cancel reply functionality
-    function setupCancelButtons() {
-        document.querySelectorAll('.cancel-reply').forEach(button => {
-            button.addEventListener('click', function() {
-                const replyForm = this.closest('.reply-form-container');
-                if (replyForm) {
-                    replyForm.style.display = 'none';
+                if (replyForm.style.display === 'none' || !replyForm.style.display) {
+                    replyForm.style.display = 'block';
                     const textarea = replyForm.querySelector('textarea');
                     if (textarea) {
-                        textarea.value = '';
+                        textarea.focus();
+                        replyForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
+                } else {
+                    replyForm.style.display = 'none';
                 }
-            });
-        });
-    }
+            }
+        }
+    });
+    
+    // Cancel reply button
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.cancel-reply')) {
+            e.preventDefault();
+            const form = e.target.closest('.reply-form-container');
+            if (form) {
+                form.style.display = 'none';
+                const textarea = form.querySelector('textarea');
+                if (textarea) {
+                    textarea.value = '';
+                }
+            }
+        }
+    });
     
     // Flag button functionality
-    function setupFlagButtons() {
-        document.querySelectorAll('.flag-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const commentId = this.dataset.commentId;
-                const flagForm = document.getElementById(`flag-form-${commentId}`);
-                const allFlagForms = document.querySelectorAll('.flag-form-container');
-                
-                // Hide all other flag forms
-                allFlagForms.forEach(form => {
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.flag-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.flag-btn');
+            const commentId = btn.getAttribute('data-comment-id');
+            const flagForm = document.getElementById(`flag-form-${commentId}`);
+            
+            if (flagForm) {
+                document.querySelectorAll('.flag-form-container').forEach(form => {
                     if (form.id !== `flag-form-${commentId}`) {
                         form.style.display = 'none';
                     }
                 });
                 
-                // Toggle current flag form
-                if (flagForm) {
-                    flagForm.style.display = flagForm.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-        });
-        
-        // Cancel flag functionality
-        document.querySelectorAll('.cancel-flag').forEach(button => {
-            button.addEventListener('click', function() {
-                const flagForm = this.closest('.flag-form-container');
-                if (flagForm) {
+                if (flagForm.style.display === 'none' || !flagForm.style.display) {
+                    flagForm.style.display = 'block';
+                    flagForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
                     flagForm.style.display = 'none';
                 }
-            });
-        });
-    }
-    
-    // AJAX like functionality
-    function setupLikeFunctionality() {
-        document.querySelectorAll('.like-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const button = this.querySelector('.btn-like');
-                const likeCount = button.querySelector('.like-count');
-                
-                fetch(this.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        likeCount.textContent = data.like_count;
-                        if (data.liked) {
-                            button.classList.add('liked');
-                        } else {
-                            button.classList.remove('liked');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            });
-        });
-    }
-    
-    // AJAX form submission for comments
-    function setupAjaxComments() {
-        const commentForms = document.querySelectorAll('.comment-form, .reply-form');
-        commentForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const submitButton = this.querySelector('button[type="submit"]');
-                const originalText = submitButton.innerHTML;
-                
-                // Show loading state
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
-                submitButton.disabled = true;
-                
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Reset form
-                        this.reset();
-                        
-                        // Hide reply form if it's a reply
-                        if (this.classList.contains('reply-form')) {
-                            this.closest('.reply-form-container').style.display = 'none';
-                        }
-                        
-                        // Reload comments section or add new comment dynamically
-                        if (data.comment_html) {
-                            const commentsList = document.getElementById('comments-list');
-                            if (commentsList) {
-                                const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = data.comment_html;
-                                const newComment = tempDiv.firstElementChild;
-                                
-                                if (this.classList.contains('reply-form')) {
-                                    // Insert reply after parent comment
-                                    const parentId = formData.get('parent_id');
-                                    const parentComment = document.querySelector(`[data-comment-id="${parentId}"]`);
-                                    if (parentComment) {
-                                        let repliesContainer = parentComment.querySelector('.comment-replies');
-                                        if (!repliesContainer) {
-                                            repliesContainer = document.createElement('div');
-                                            repliesContainer.className = 'comment-replies';
-                                            parentComment.appendChild(repliesContainer);
-                                        }
-                                        repliesContainer.appendChild(newComment);
-                                    }
-                                } else {
-                                    // Insert new top-level comment at the beginning
-                                    commentsList.insertBefore(newComment, commentsList.firstChild);
-                                }
-                                
-                                // Re-setup event handlers for new comment
-                                setupEventHandlers();
-                                
-                                // Scroll to new comment
-                                newComment.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            }
-                        }
-                        
-                        // Update comment count
-                        const commentCount = document.querySelector('.comment-count');
-                        if (commentCount) {
-                            const currentCount = parseInt(commentCount.textContent.match(/\d+/)[0]);
-                            commentCount.textContent = `(${currentCount + 1})`;
-                        }
-                        
-                        // Show success message
-                        showMessage(data.message, 'success');
-                    } else {
-                        // Show error messages
-                        if (data.errors) {
-                            data.errors.forEach(error => showMessage(error, 'error'));
-                        } else if (data.error) {
-                            showMessage(data.error, 'error');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showMessage('An error occurred. Please try again.', 'error');
-                })
-                .finally(() => {
-                    // Reset button state
-                    submitButton.innerHTML = originalText;
-                    submitButton.disabled = false;
-                });
-            });
-        });
-    }
-    
-    // Show notification messages
-    function showMessage(message, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
-        messageDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        // Insert message at top of comments section
-        const commentsSection = document.getElementById('comments');
-        if (commentsSection) {
-            commentsSection.insertBefore(messageDiv, commentsSection.firstChild);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
+            }
         }
-    }
+    });
     
-    // Setup all event handlers
-    function setupEventHandlers() {
-        setupCharacterCounter();
-        setupAutoResize();
-        setupReplyButtons();
-        setupCancelButtons();
-        setupFlagButtons();
-        setupLikeFunctionality();
-    }
+    // Cancel flag button
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.cancel-flag')) {
+            e.preventDefault();
+            const form = e.target.closest('.flag-form-container');
+            if (form) {
+                form.style.display = 'none';
+            }
+        }
+    });
     
-    // Initialize everything
-    setupEventHandlers();
-    setupAjaxComments();
-    
-    // Comment search functionality (if search box exists)
-    const searchInput = document.getElementById('comment-search');
-    if (searchInput) {
-        let searchTimeout;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
+    // Like button with AJAX - FIXED: Prevents double-clicks and race conditions
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('like-form')) {
+            e.preventDefault();
+            e.stopImmediatePropagation(); // Prevent multiple handlers
             
-            if (query.length < 2) {
-                document.getElementById('search-results').innerHTML = '';
+            const form = e.target;
+            const formAction = form.action;
+            
+            // Prevent duplicate requests
+            if (pendingLikeRequests.has(formAction)) {
+                console.log('Like request already in progress, ignoring...');
                 return;
             }
             
-            searchTimeout = setTimeout(() => {
-                const contentTypeId = document.querySelector('[name="content_type_id"]').value;
-                const objectId = document.querySelector('[name="object_id"]').value;
-                
-                fetch(`/comments/api/search/?q=${encodeURIComponent(query)}&content_type_id=${contentTypeId}&object_id=${objectId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        displaySearchResults(data.results);
+            const button = form.querySelector('.btn-like');
+            const likeCount = form.querySelector('.like-count');
+            
+            if (!button || !likeCount) {
+                console.error('Like button or count element not found');
+                return;
+            }
+            
+            // Disable button and mark as pending
+            button.disabled = true;
+            pendingLikeRequests.add(formAction);
+            
+            // Visual feedback
+            const originalButtonHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            fetch(formAction, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: new FormData(form),
+                credentials: 'same-origin',
+                cache: 'no-store'  // Don't cache this request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Update count immediately
+                    likeCount.textContent = data.like_count;
+                    likeCount.setAttribute('data-count', data.like_count);
+                    
+                    // Update button state
+                    if (data.liked) {
+                        button.classList.add('liked');
+                        button.setAttribute('aria-pressed', 'true');
+                    } else {
+                        button.classList.remove('liked');
+                        button.setAttribute('aria-pressed', 'false');
                     }
-                })
-                .catch(error => console.error('Search error:', error));
-            }, 300);
-        });
-    }
+                    
+                    // Restore button HTML
+                    button.innerHTML = originalButtonHTML;
+                    
+                    console.log('Like updated successfully:', data);
+                } else {
+                    console.error('Like failed:', data);
+                    button.innerHTML = originalButtonHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Like request error:', error);
+                button.innerHTML = originalButtonHTML;
+                alert('Failed to update like. Please try again.');
+            })
+            .finally(() => {
+                // Re-enable button after delay to prevent rapid clicking
+                setTimeout(() => {
+                    button.disabled = false;
+                    pendingLikeRequests.delete(formAction);
+                }, 500);
+            });
+        }
+    });
     
-    function displaySearchResults(results) {
-        const resultsContainer = document.getElementById('search-results');
-        if (!resultsContainer) return;
-        
-        if (results.length === 0) {
-            resultsContainer.innerHTML = '<p>No comments found.</p>';
-            return;
+    // Delete comment confirmation
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('delete-form')) {
+            if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+    
+    // Smooth scroll to comments
+    const commentLinks = document.querySelectorAll('a[href*="#comment"]');
+    commentLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href.includes('#')) {
+                const targetId = href.split('#')[1];
+                const target = document.getElementById(targetId);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    target.style.transition = 'background-color 0.3s';
+                    const originalBg = window.getComputedStyle(target).backgroundColor;
+                    target.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        target.style.backgroundColor = originalBg;
+                    }, 2000);
+                }
+            }
+        });
+    });
+    
+    // Handle success messages from Django
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            if (!alert.classList.contains('alert-permanent')) {
+                setTimeout(() => {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 500);
+                }, 5000);
+            }
+        });
+    }, 100);
+});
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} comment-toast`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span>${message}</span>
+            <button type="button" class="btn-close ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 300);
+    }, 5000);
+}
+
+// Add animation styles
+if (!document.getElementById('comment-animations')) {
+    const style = document.createElement('style');
+    style.id = 'comment-animations';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
         
-        const html = results.map(result => `
-            <div class="search-result">
-                <strong>${result.author}</strong> 
-                <small>${new Date(result.created_at).toLocaleDateString()}</small>
-                <p>${result.content}</p>
-            </div>
-        `).join('');
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
         
-        resultsContainer.innerHTML = html;
-    }
-});
+        .comment-toast {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .fa-spin {
+            animation: fa-spin 1s infinite linear;
+        }
+        
+        @keyframes fa-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+}

@@ -16,21 +16,27 @@
 {% block twitter_description %}Latest articles in {{ category.category_name }}.{% endblock %}
 {% block twitter_image %}{% if page_obj.object_list.0.featured_image %}{{ page_obj.object_list.0.featured_image.url }}{% endif %}{% endblock %}
 
-{% block head %}
-
-{% endblock %}
+{% block head %}{% endblock %}
 
 {% block content %}
 <section class="category-page">
   <h2 class="category-title">{{ category.category_name }}</h2>
 
   {% if page_obj.object_list %}
+    <!-- Top Featured Section with 3-column layout -->
     <div class="category-layout">
       <!-- Left Sidebar -->
       <div class="category-sidebar">
         {% for post in page_obj.object_list|slice:"1:3" %}
           <div class="sidebar-item">
-            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar" context_name="sidebar" loading="lazy" %}
+            <div style="position: relative;">
+              {% if post.is_video_post %}
+                <div class="video-badge-small">
+                  <i class="fas fa-play"></i>
+                </div>
+              {% endif %}
+              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-sidebar" context_name="sidebar" loading="lazy" %}
+            </div>
             <div class="side-post">
               <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
               <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
@@ -42,10 +48,22 @@
       <!-- Main Feature -->
       <div class="main-feature">
         {% with post=page_obj.object_list.0 %}
-          <div class="featured-article">
-            <picture>
-              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-main-feature" context_name="full" loading="lazy" %}
-            </picture>
+          <div class="featured-article {% if post.is_video_post %}has-video-badge{% endif %}">
+            <div style="position: relative;">
+              {% if post.is_video_post %}
+                <div class="video-overlay-badge">
+                  <i class="fas fa-play-circle"></i>
+                </div>
+                {% if post.video_duration %}
+                  <div class="video-duration-badge">
+                    {{ post.video_duration|date:"H:i:s" }}
+                  </div>
+                {% endif %}
+              {% endif %}
+              <picture>
+                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-main-feature" context_name="full" loading="lazy" %}
+              </picture>
+            </div>
             <div class="overlay">
               <h2><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h2>
               <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
@@ -59,7 +77,14 @@
       <div class="category-sidebar-right">
         {% for post in page_obj.object_list|slice:"3:5" %}
           <div class="sidebar-item-right">
-            {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-right" context_name="sidebar" loading="lazy" %}
+            <div style="position: relative;">
+              {% if post.is_video_post %}
+                <div class="video-badge-small">
+                  <i class="fas fa-play"></i>
+                </div>
+              {% endif %}
+              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-sidebar-right" context_name="sidebar" loading="lazy" %}
+            </div>  
             <div class="side-post">
               <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
               <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
@@ -69,70 +94,91 @@
       </div>
     </div>
 
-    <section>
-      <!-- Editor's Picks -->
+    <!-- ============================================ -->
+    <!-- IMPORTANT: Single container for both parts -->
+    <!-- ============================================ -->
+    <div class="content-wrapper">
+      <!-- Editor's Picks (LEFT SIDE) -->
       {% if editors_picks %}
-        <div class="sidebar editors-picks">
+        <aside class="sidebar editors-picks">
           <h3>Editor's Picks</h3>
           {% for post in editors_picks %}
             <div class="editors-post">
-              {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" loading="lazy" %}
+              <div style="position: relative;">
+                {% if post.is_video_post %}
+                  <div class="video-badge-small">
+                    <i class="fas fa-play"></i>
+                  </div>
+                {% endif %}
+                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-editors-picks" context_name="sidebar" loading="lazy" %}
+              </div>
               <div class="side-post">
-                <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
-                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
-                <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+              <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">{{ post.title }}</a></h4>
+              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+              <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
               </div>
             </div>
           {% endfor %}
-        </div>
+        </aside>
       {% endif %}
 
-      <!-- Additional Posts Grid -->
-      {% if page_obj.object_list|length > 5 %}
-        <div class="grid-3">
-          {% for post in page_obj.object_list|slice:"5:" %}
-            <div class="article-card">
-              <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}">
-                {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-grid" context_name="post" loading="lazy" %}
-                <h5>{{ post.title }}</h5>
-                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
-                <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
-              </a>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </section>
-
-    <!-- Show ad after every 3rd post -->
-        {% if forloop.counter0|divisibleby:3 and not forloop.first %}
-            <div class="ad-position-between-posts">
-                {% show_ad 'between-posts' %}
-            </div>
+      <!-- Main Content Area (RIGHT SIDE) -->
+      <div class="main-content">
+        <!-- Additional Posts Grid -->
+        {% if page_obj.object_list|length > 5 %}
+          <div class="grid-3">
+            {% for post in page_obj.object_list|slice:"5:" %}
+              <div class="article-card {% if post.is_video_post %}has-video-badge{% endif %}">
+                <a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}"  style="position: relative; display: block;">
+                  {% if post.is_video_post %}
+                    <div class="video-overlay-badge">
+                      <i class="fas fa-play-circle"></i>
+                    </div>
+                  {% endif %}
+                  {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-grid" context_name="post" loading="lazy" %}
+                  <h5>{{ post.title }}</h5>
+                  <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
+                  <span class="datetime">{{ post.created_at|date:"M d, Y" }}</span>
+                </a>
+              </div>
+              
+              <!-- Show ad after every 3rd post -->
+              {% if forloop.counter|divisibleby:3 and not forloop.last %}
+                <div class="ad-position-between-posts">
+                  {% show_ad 'between-posts' %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
         {% endif %}
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+          <nav aria-label="Page navigation" class="pagination-wrapper">
+            <ul class="pagination">
+              {% if page_obj.has_previous %}
+                <li><a href="?page=1">First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+              {% endif %}
 
-    <!-- Pagination -->
-    <nav aria-label="Page navigation" class="pagination-wrapper">
-      <ul class="pagination">
-        {% if page_obj.has_previous %}
-          <li><a href="?page=1">First</a></li>
-          <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="active"><span>{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li><a href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                <li><a href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+              {% endif %}
+            </ul>
+          </nav>
         {% endif %}
-
-        {% for num in page_obj.paginator.page_range %}
-          {% if page_obj.number == num %}
-            <li class="active"><span>{{ num }}</span></li>
-          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <li><a href="?page={{ num }}">{{ num }}</a></li>
-          {% endif %}
-        {% endfor %}
-
-        {% if page_obj.has_next %}
-          <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
-          <li><a href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
-        {% endif %}
-      </ul>
-    </nav>
+      </div>
+    </div>
+    <!-- End content-wrapper -->
 
   {% else %}
     <!-- No Posts Message -->

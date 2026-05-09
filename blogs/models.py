@@ -5,11 +5,10 @@ from django_ckeditor_5.fields import CKEditor5Field
 from django.urls import reverse
 from taggit.managers import TaggableManager
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 import os
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-
-
 
 
 # Create your models here.
@@ -49,6 +48,13 @@ STATUS_CHOICES =(
     ("Published", "Published")
 )
 
+# NEW: Content type choices
+CONTENT_TYPE_CHOICES = [
+    ('article', 'Article'),
+    ('video', 'Video'),
+    ('mixed', 'Article with Video'),
+]
+
 def validate_image_extension(value):
     ext = os.path.splitext(value.name)[1].lower()
     valid_extensions = ['.jpg', '.jpeg', '.png']
@@ -59,6 +65,14 @@ class Blog(models.Model):
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=150, unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    
+    # NEW: Content type field
+    content_type = models.CharField(
+        max_length=10,
+        choices=CONTENT_TYPE_CHOICES,
+        default='article',
+        help_text='Type of content (auto-detected based on video)'
+    )
     
     # SEO Enhancement Fields
     meta_title = models.CharField(max_length=60, blank=True, help_text="SEO title (60 chars max)")
@@ -74,15 +88,44 @@ class Blog(models.Model):
     image_height = models.PositiveIntegerField(blank=True, null=True, help_text="Original image height in pixels.", editable=False)
     short_description = CKEditor5Field('Description', config_name='default')
     blog_body = CKEditor5Field('Content', config_name='default')
+    
+    # NEW: Video fields
+    video_file = models.FileField(
+        upload_to='blog_videos/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['mp4', 'webm', 'ogg', 'mov', 'avi'])],
+        help_text='Upload video file (MP4, WebM, OGG, MOV, AVI)'
+    )
+    
+    video_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='Or provide YouTube/Vimeo URL (e.g., https://www.youtube.com/watch?v=xxxxx)'
+    )
+    
+    video_thumbnail = models.ImageField(
+        upload_to='video_thumbnails/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        help_text='Custom thumbnail for video (optional, will use featured_image if not provided)'
+    )
+    
+    video_duration = models.DurationField(
+        blank=True,
+        null=True,
+        help_text='Video duration (automatically calculated for uploaded videos)'
+    )
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Draft")
     is_featured = models.BooleanField(default=False)
     is_editors_pick = models.BooleanField(default=False)
-    tags = TaggableManager()  # Add this line
-    views = models.IntegerField(default=0)  # Needed for trending logic
+    tags = TaggableManager()
+    views = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Optional news-specific fields (add if you want enhanced news features)
+    # Optional news-specific fields
     is_breaking_news = models.BooleanField(default=False, help_text="Mark as breaking news")
     news_priority = models.CharField(
         max_length=20,
@@ -104,6 +147,18 @@ class Blog(models.Model):
         default=False,
         help_text="Exclude from Google News sitemap"
     )
+    # Additional news fields
+    news_keywords = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Comma-separated keywords for Google News"
+    )
+    
+    geo_locations = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Geographic locations relevant to this story (comma-separated)"
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -115,6 +170,18 @@ class Blog(models.Model):
         # Auto-generate alt text if not provided
         if not self.image_alt_text and self.featured_image:
             self.image_alt_text = f"Featured image for {self.title}"
+        
+        # NEW: Auto-set content_type based on video presence
+        if self.video_file or self.video_url:
+            # If has substantial text content, it's mixed
+            from django.utils.html import strip_tags
+            text_length = len(strip_tags(self.blog_body)) if self.blog_body else 0
+            if text_length > 100:
+                self.content_type = 'mixed'
+            else:
+                self.content_type = 'video'
+        else:
+            self.content_type = 'article'
             
         super().save(*args, **kwargs)
 
@@ -138,6 +205,74 @@ class Blog(models.Model):
         if not self.featured_image:
             return ""
         return os.path.splitext(self.featured_image.name)[1].lower()
+    
+    # NEW: Video helper properties
+    @property
+    def is_video_post(self):
+        """Check if this post has video content"""
+        return self.content_type in ['video', 'mixed']
+    
+    @property
+    def has_uploaded_video(self):
+        """Check if post has uploaded video file"""
+        return bool(self.video_file)
+    
+    @property
+    def has_embedded_video(self):
+        """Check if post has embedded video URL"""
+        return bool(self.video_url)
+    
+    @property
+    def video_thumbnail_url(self):
+        """Get video thumbnail - custom or featured image"""
+        if self.video_thumbnail:
+            return self.video_thumbnail.url
+        elif self.featured_image:
+            return self.featured_image.url
+        return None
+    
+    def get_video_embed_code(self):
+        """
+        Convert YouTube/Vimeo URL to embed format
+        Matches YouTube's official embed code format
+        """
+        if not self.video_url:
+            return ''
+        
+        import re
+        url = self.video_url.strip()
+        
+        # YouTube: Extract 11-character video ID
+        # Handles: youtube.com/watch?v=, youtu.be/, youtube.com/embed/
+        youtube_match = re.search(
+            r'(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})', 
+            url
+        )
+        if youtube_match:
+            video_id = youtube_match.group(1)
+            return f'https://www.youtube.com/embed/{video_id}'
+        
+        # Vimeo: Extract numeric ID
+        vimeo_match = re.search(r'vimeo\.com\/(\d+)', url)
+        if vimeo_match:
+            video_id = vimeo_match.group(1)
+            return f'https://player.vimeo.com/video/{video_id}'
+        
+        # Fallback: return original URL
+        return url
+      
+    @property
+    def video_type_display(self):
+        """Get display name for video type"""
+        if self.has_uploaded_video:
+            return 'Uploaded Video'
+        elif self.has_embedded_video:
+            if 'youtube' in self.video_url.lower():
+                return 'YouTube Video'
+            elif 'vimeo' in self.video_url.lower():
+                return 'Vimeo Video'
+            return 'External Video'
+        return None
 
     # SEO Methods
     def get_meta_title(self):
@@ -204,6 +339,7 @@ class Blog(models.Model):
             'category_slug': self.category.slug,
             'slug': self.slug
         })
+    
     @property
     def comment_count(self):
         """Get total number of comments using generic relation"""
@@ -218,7 +354,7 @@ class Blog(models.Model):
 
     def get_structured_data(self):
         """Generate JSON-LD structured data"""
-        return {
+        data = {
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             "mainEntityOfPage": {
@@ -253,6 +389,31 @@ class Blog(models.Model):
             "articleSection": self.category.category_name,
             "url": f"https://yourdomain.com{self.get_absolute_url()}"
         }
+        
+        # NEW: Add video object to structured data if video exists
+        if self.is_video_post:
+            if self.has_uploaded_video:
+                data["video"] = {
+                    "@type": "VideoObject",
+                    "name": self.title,
+                    "description": self.get_meta_description(),
+                    "thumbnailUrl": self.video_thumbnail_url,
+                    "uploadDate": self.created_at.isoformat(),
+                    "contentUrl": self.video_file.url if self.video_file else None,
+                }
+                if self.video_duration:
+                    data["video"]["duration"] = f"PT{int(self.video_duration.total_seconds())}S"
+            elif self.has_embedded_video:
+                data["video"] = {
+                    "@type": "VideoObject",
+                    "name": self.title,
+                    "description": self.get_meta_description(),
+                    "thumbnailUrl": self.video_thumbnail_url,
+                    "embedUrl": self.get_video_embed_code(),
+                    "uploadDate": self.created_at.isoformat(),
+                }
+        
+        return data
     
     def __str__(self):
         return self.title
@@ -336,16 +497,3 @@ class LinkPerformance(models.Model):
     
     class Meta:
         unique_together = ('link_url', 'source_post', 'date')
-
-    
-
-#class Comment(models.Model):
-    #user = models.ForeignKey(User, on_delete=models.CASCADE)
-    #blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
-    #comment = models.TextField(max_length=250)
-    #parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='children')
-    #created_at = models.DateTimeField(auto_now_add=True)
-    #updated_at = models.DateTimeField(auto_now=True)
-
-    #def __str__(self):
-        #return f'{self.user.username}: {self.comment[:30]}'

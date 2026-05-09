@@ -112,7 +112,7 @@ img {
 .featured-article {
   position: relative;
   display: block;
-  background: #fff;
+  background: none;
   border-radius: 0;
   overflow: hidden;
   transition: transform 0.2s ease;
@@ -143,7 +143,7 @@ img {
   bottom: auto;
   left: auto;
   right: auto;
-  background: #ffffff;
+  background: none;
   padding: 24px;
   color: #141414;
   border-top: 3px solid #BB1919;
@@ -236,17 +236,7 @@ img {
 =========================== */
 .sidebar {
   background: none;
-  border-left: 1px solid #E6E8EA;
   padding-left: 24px;
-}
-
-.sidebar h3 {
-  font-size: 1.2rem;
-  color: #BB1919;
-  letter-spacing: -0.5px;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 3px solid #BB1919;
 }
 
 /* DESKTOP: Text under image layout */
@@ -266,7 +256,7 @@ img {
 .editors-post:hover,
 .sidebar-item:hover,
 .sidebar-item-right:hover {
-  background-color: #F8F9FA;
+  
   margin: 0 -12px;
   padding: 12px 12px 20px 12px;
 }
@@ -302,13 +292,14 @@ img {
   flex: 1;
 }
 
-.trending-post h3,
-.editors-post h3,
-.sidebar-item h3,
-.sidebar-item-right h3 {
+.trending-post h4,
+.editors-post h4,
+.sidebar-item h4,
+.sidebar-item-right h4 {
   margin: 0 0 8px;
-  font-size: 2rem;
-  /*line-height: 1.3;*/
+  font-size: 1rem;
+  line-height: 1.3;
+  font-weight: 700;
 }
 
 .trending-post h4 a,
@@ -373,7 +364,7 @@ img {
 /* UPDATED: Category Name Badge - Fixed sizing and styling */
 .catename {
   border-radius: 22px;
-  border: 2px solid  rgb(10, 2, 2);
+  border: 2px solid rgb(10, 2, 2);
   padding: 6px 12px;
   width: auto;
   min-width: 75px;
@@ -398,6 +389,9 @@ img {
   outline-offset: 2px;
 }
 
+.recent-articles{
+   background: #ffffff;
+}
 .recent-articles .grid-4 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -406,7 +400,6 @@ img {
 }
 
 .article-card {
-  background: none;
   transition: transform 0.2s ease;
   display: block;
   position: relative;
@@ -487,6 +480,7 @@ img {
   padding: 32px 16px;
   max-width: 1280px;
   margin: 0 auto;
+  background: #ffffff;
   border-top: 8px solid #BB1919;
   margin-top: 48px;
 }
@@ -527,7 +521,6 @@ img {
 /* Category sidebars - text under images */
 .category-sidebar,
 .category-sidebar-right {
-  border-left: 1px solid #E6E8EA;
   padding-left: 24px;
 }
 
@@ -564,7 +557,7 @@ img {
 
 .category-block .overlay {
   position: static;
-  background: #ffffff;
+  background: none;
   padding: 24px;
   color: #141414;
   border-top: 3px solid #BB1919;
@@ -774,12 +767,12 @@ img {
     padding-top: 24px;
   }
 
-  .sidebar h3 {
-    font-size: 1.25rem;
-    margin-bottom: 16px;
+  .sidebar .trending-post p {
+    display: none;
   }
 
-  .sidebar .trending-post p {
+  /* Hide editor's pick images on mobile */
+  .editors-picks .editors-post img {
     display: none;
   }
 
@@ -831,7 +824,6 @@ img {
 
   /* MOBILE: Change to horizontal layout for space efficiency */
   .trending-post,
-  .editors-post,
   .sidebar-item,
   .sidebar-item-right {
     flex-direction: row;
@@ -839,8 +831,13 @@ img {
     align-items: flex-start;
   }
 
+  /* Editor's posts remain vertical since images are hidden */
+  .editors-post {
+    flex-direction: column;
+    gap: 0;
+  }
+
   .trending-post img,
-  .editors-post img,
   .sidebar-item img,
   .sidebar-item-right img {
     width: 100px;
@@ -853,7 +850,7 @@ img {
   .editors-post h4,
   .sidebar-item h4,
   .sidebar-item-right h4 {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   /* Recent Articles mobile */
@@ -1037,10 +1034,6 @@ img {
   .pagination span {
     border-width: 2px;
   }
-
-  .overlay {
-    background: #ffffff;
-  }
 }
 
 /* Focus management for better accessibility */
@@ -1080,4 +1073,19 @@ img {
   .overlay h4 {
     text-shadow: none;
   }
+}
+
+/* Remove all borders from article cards and grids */
+.article-card,
+.article-card *,
+.grid-3 .article-card,
+.grid-4 .article-card,
+.recent-articles .article-card {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.grid-3, .grid-4, .recent-articles .grid-4 {
+  border: none !important;
 }

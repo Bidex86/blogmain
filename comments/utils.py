@@ -1,4 +1,4 @@
-# comments/utils.py
+# comments/utils.py - Fixed version
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.template.loader import render_to_string
@@ -10,7 +10,13 @@ def get_comment_tree(obj, max_depth=None):
     Get a hierarchical tree of comments for an object
     Returns nested dictionary structure
     """
-    comments = Comment.objects.for_object(obj).approved().select_related('user')
+    # FIXED: Use filter instead of approved() method
+    content_type = ContentType.objects.get_for_model(obj)
+    comments = Comment.objects.filter(
+        content_type=content_type,
+        object_id=obj.pk,
+        is_approved=True
+    ).select_related('user')
     
     # Build tree structure
     comment_dict = {}
@@ -35,7 +41,7 @@ def get_comment_tree(obj, max_depth=None):
 
 def render_comment_html(comment, user=None):
     """Render a single comment to HTML"""
-    return render_to_string('comments/comment_thread.html', {
+    return render_to_string('comments/comment_item.html', {
         'comment': comment,
         'depth': comment.depth,
         'user': user,
