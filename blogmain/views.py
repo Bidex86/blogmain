@@ -33,14 +33,19 @@ def home(request):
         if not featured_post:
             featured_post = published_posts.order_by('-created_at').first()
 
-        # Trending posts (most viewed) - ensure we have posts
-        trending_posts = published_posts.order_by('-views')[:2]
+        # Track which posts are already displayed
+        used_ids = [featured_post.id] if featured_post else []
 
-        # Editor's picks - fallback to recent posts if no editor picks
-        editors_picks = published_posts.filter(is_editors_pick=True).order_by('-created_at')[:5]
+        # Trending posts (most viewed), excluding the featured post
+        trending_posts = published_posts.exclude(id__in=used_ids).order_by('-views')[:2]
+        used_ids += [p.id for p in trending_posts]
+
+        # Editor's picks: curated first, excluding anything already shown
+        editors_picks = published_posts.filter(is_editors_pick=True)\
+            .exclude(id__in=used_ids).order_by('-created_at')[:5]
         if not editors_picks.exists():
-            editors_picks = published_posts.order_by('-created_at')[1:6]  # Skip featured post
-
+            editors_picks = published_posts.exclude(id__in=used_ids)\
+                .order_by('-created_at')[:5]
         # Recent posts with pagination
         posts = Blog.objects.select_related('category').filter(status='Published').order_by('-created_at')
         paginator = Paginator(posts, 10)

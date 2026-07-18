@@ -77,3 +77,10 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.title}"
+    
+    @property
+    def target_url(self):
+        """Always resolve to the post's CURRENT url; fall back to the stored snapshot."""
+        if self.blog_post_id:
+            return self.blog_post.get_absolute_url()
+        return self.url or '/'

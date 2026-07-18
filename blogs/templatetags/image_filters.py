@@ -12,7 +12,7 @@ _rendered_first_image = {}
 
 IMAGE_CONTEXTS = {
     "default": SIZES,
-    "sidebar": [150, 300],
+    "sidebar": [150, 320],
     "post": [150, 320, 480, 768],  # Added small size for mobile
     "full": [768, 1024],
 }

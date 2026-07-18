@@ -1,4 +1,5 @@
-from django.db.models.signals import post_save, pre_delete
+#from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -16,23 +17,51 @@ from pathlib import Path
 from django.db.models.signals import post_save
 from comments.models import Comment
 from notifications.views import create_notification, send_push_notification, NotificationPreference, notify_users_new_post
+from django.db import transaction
 
 # ---------------- EMAIL ALERT ---------------- #
+@receiver(pre_save, sender=Blog)
+def _track_publish_transition(sender, instance, **kwargs):
+    """Record whether the post was ALREADY Published before this save,
+    so post_save can distinguish a fresh publish from a re-save."""
+    if not instance.pk:
+        instance._was_published = False
+        return
+    instance._was_published = (
+        Blog.objects.filter(pk=instance.pk)
+        .values_list('status', flat=True).first() == 'Published'
+    )
+
+
 @receiver(post_save, sender=Blog)
-def send_new_post_email(sender, instance, created, **kwargs):
-    """Send email and push notifications for published posts"""
-    if created and getattr(instance, 'status', 'Draft') == 'Published':
+def send_new_post_email(sender, instance, created, raw=False, **kwargs):
+    """Notify when a post BECOMES Published — whether newly created as
+    Published, or a Draft edited to Published."""
+    if raw:
+        return  # never fire during loaddata
+
+    became_published = (
+        getattr(instance, 'status', 'Draft') == 'Published'
+        and not getattr(instance, '_was_published', False)
+    )
+    if not became_published:
+        return
+
+    def _dispatch():
+        # 1) Push + in-app first — an email failure must never block these.
         try:
-            # Send email (existing code)
+            notify_users_new_post(instance)
+        except Exception as e:
+            print(f"Error sending push/in-app notifications: {e}")
+
+        # 2) Email newsletter, isolated.
+        try:
             subject = f"New post: {instance.title}"
             from_email = 'bidemia02@gmail.com'
             recipient_list = [u.email for u in User.objects.filter(profile__newsletter_opt_in=True)]
-            
-            html_content = render_to_string('emails/add_post.html', {
-                'post': instance,
-                'request': None
-            })
-            
+
+            html_content = render_to_string('emails/add_post.html', {'post': instance, 'request': None})
+
             if hasattr(instance, 'short_description') and instance.short_description:
                 text_content = instance.short_description
             else:
@@ -41,15 +70,11 @@ def send_new_post_email(sender, instance, created, **kwargs):
             msg = EmailMultiAlternatives(subject, text_content, from_email, recipient_list)
             msg.attach_alternative(html_content, "text/html")
             msg.send()
-            
             print(f"Newsletter sent via email for: {instance.title}")
-            
-            # Send push notifications using the new system
-            notify_users_new_post(instance)
-            
         except Exception as e:
-            print(f"Error sending notifications: {e}")
+            print(f"Error sending newsletter email: {e}")
 
+    transaction.on_commit(_dispatch)    
 WEBP_QUALITY = 80
 JPEG_QUALITY = 80
 SIZES = [150, 320, 480, 768, 1024]  # includes sidebar sizes
@@ -100,7 +125,9 @@ def delete_old_files(instance):
 # Cleanup - UPDATED to handle video files
 # ----------------
 @receiver(pre_delete, sender=Blog)
-def cleanup_media_on_delete(sender, instance, **kwargs):
+def cleanup_media_on_delete(sender, instance, raw=False, **kwargs):
+    if raw:
+        return
     """Delete images and videos when blog post is deleted"""
     # Clean up images
     delete_old_files(instance)
@@ -123,7 +150,9 @@ def cleanup_media_on_delete(sender, instance, **kwargs):
 # Image Optimization
 # ----------------
 @receiver(post_save, sender=Blog)
-def optimize_images(sender, instance, created, **kwargs):
+def optimize_images(sender, instance, created, raw=False, **kwargs):
+    if raw:
+        return
     """Optimize and resize featured images"""
     if not instance.featured_image:
         return
@@ -214,7 +243,9 @@ def optimize_images(sender, instance, created, **kwargs):
 # Video Processing - FIXED VERSION
 # ----------------
 @receiver(post_save, sender=Blog)
-def process_video_metadata(sender, instance, created, update_fields, **kwargs):
+def process_video_metadata(sender, instance, created, update_fields, raw=False, **kwargs):
+    if raw:
+        return
     """
     Extract video metadata like duration and generate thumbnail
     Only runs if video_file exists and duration is not set
@@ -309,7 +340,11 @@ def process_video_metadata(sender, instance, created, update_fields, **kwargs):
 # Comment Notifications
 # ----------------
 @receiver(post_save, sender=Comment)
-def send_comment_notifications(sender, instance, created, **kwargs):
+def send_comment_notifications(sender, instance, created, raw=False, **kwargs):
+    if raw:
+        return          # ← skip entirely during loaddata
+    if not created:
+        return
     """Send notifications when new comments or replies are posted"""
     if not created:
         return

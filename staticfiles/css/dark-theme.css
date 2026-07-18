@@ -1,0 +1,156 @@
+/* ============================================================
+   DARK THEME
+   Activated by the `dark-mode` class on <body> (set by your
+   existing toggle + the server-rendered class in base.html).
+   Every rule is prefixed with `body.dark-mode` so it overrides
+   the light styles by specificity, regardless of file load order.
+   ============================================================ */
+
+body.dark-mode {
+  --dk-bg:        #121212;  /* page background            */
+  --dk-surface:   #1e1e1e;  /* cards / panels             */
+  --dk-surface-2: #262626;  /* inputs / elevated elements */
+  --dk-text:      #e8e8e8;  /* primary text               */
+  --dk-text-muted:#a8a8a8;  /* meta / secondary text      */
+  --dk-border:    #333333;  /* borders / dividers         */
+  --dk-link:      #ff7a5c;  /* links (warm accent)        */
+
+  background: var(--dk-bg);
+  color: var(--dk-text);
+}
+
+body.dark-mode a { color: var(--dk-link); }
+
+/* ---- Page-level sections: blend into the page background ---- */
+body.dark-mode .featured-section,
+body.dark-mode .recent-articles,
+body.dark-mode .category-block {
+  background: var(--dk-bg);
+}
+
+/* ---- Cards & panels: raised surface ---- */
+body.dark-mode .blog-post,
+body.dark-mode .article-card,
+body.dark-mode .related-card,
+body.dark-mode .related-inline li,
+body.dark-mode .auto-related-item,
+body.dark-mode .blog-sidebar section,
+body.dark-mode .sidebar.editors-picks,
+body.dark-mode .no-posts-message,
+body.dark-mode .comment,
+body.dark-mode .featured-article .overlay,
+body.dark-mode .navbar-overlay,
+body.dark-mode .pagination a,
+body.dark-mode .pagination span,
+body.dark-mode .readmore {
+  background: var(--dk-surface);
+  color: var(--dk-text);
+  border-color: var(--dk-border);
+}
+
+/* ---- Primary text (headings, titles, links-as-text) ---- */
+body.dark-mode .blog-header h1,
+body.dark-mode .breadcrumb-item.active,
+body.dark-mode .social-share h5,
+body.dark-mode .post-body h2,
+body.dark-mode .post-body h3,
+body.dark-mode .post-body h4,
+body.dark-mode .post-body pre code,
+body.dark-mode .related-inline h4,
+body.dark-mode .related-inline a,
+body.dark-mode .link-title,
+body.dark-mode .blog-tags h5,
+body.dark-mode .related-posts h3,
+body.dark-mode .related-card h5,
+body.dark-mode .comments h3,
+body.dark-mode .add-comment h4,
+body.dark-mode .comment-form label,
+body.dark-mode .username,
+body.dark-mode .article-info h5 a,
+body.dark-mode .popular-article .article-info h6 a,
+body.dark-mode .editors-post h4,
+body.dark-mode .article-card h5 {
+  color: var(--dk-text);
+}
+
+/* ---- Muted / secondary text (meta, dates, excerpts) ---- */
+body.dark-mode .breadcrumb-item,
+body.dark-mode .post-meta,
+body.dark-mode .featured-image figcaption,
+body.dark-mode .blog-content,
+body.dark-mode .post-excerpt,
+body.dark-mode .post-body blockquote,
+body.dark-mode .link-excerpt,
+body.dark-mode .related-card .datetime,
+body.dark-mode .comments h3 small,
+body.dark-mode .comment-date,
+body.dark-mode .comment-content,
+body.dark-mode .sidebar-article .post-meta,
+body.dark-mode .category-list a,
+body.dark-mode .popular-article small,
+body.dark-mode .featured-article p,
+body.dark-mode .featured-article .datetime,
+body.dark-mode .sidebar-item .datetime,
+body.dark-mode .sidebar-item-right .datetime,
+body.dark-mode .editors-post p,
+body.dark-mode .editors-post .datetime,
+body.dark-mode .article-card p,
+body.dark-mode .article-card .datetime,
+body.dark-mode .no-posts-message p {
+  color: var(--dk-text-muted);
+}
+
+/* ---- Borders & dividers ---- */
+body.dark-mode .blog-header,
+body.dark-mode .social-share,
+body.dark-mode .featured-image figcaption,
+body.dark-mode .post-body h2,
+body.dark-mode .blog-tags,
+body.dark-mode .related-posts,
+body.dark-mode .comments,
+body.dark-mode .recent-articles-sidebar .sidebar-article,
+body.dark-mode .category-list li,
+body.dark-mode .popular-posts-sidebar .popular-article,
+body.dark-mode .blog-post,
+body.dark-mode .sidebar-item,
+body.dark-mode .sidebar-item-right,
+body.dark-mode .editors-post,
+body.dark-mode .main-feature,
+body.dark-mode .category-sidebar,
+body.dark-mode .category-sidebar-right,
+body.dark-mode .navbar-overlay a,
+body.dark-mode .pagination li.disabled span {
+  border-color: var(--dk-border);
+}
+
+/* ---- Form fields: visible on dark ---- */
+body.dark-mode .comment-form textarea,
+body.dark-mode .comment-form input[type="text"],
+body.dark-mode .comment-form input[type="email"],
+body.dark-mode .reply-btn {
+  background: var(--dk-surface-2);
+  color: var(--dk-text);
+  border: 1px solid var(--dk-border);
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder { color: #888; }
+
+body.dark-mode .featured-article h2,
+body.dark-mode .featured-article h3,
+body.dark-mode .featured-article .overlay h2,
+body.dark-mode .featured-article .overlay h3 {
+  color: var(--dk-text);
+}
+/* Ensure all headings are readable in dark mode */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+  color: var(--dk-text);
+}
+body.dark-mode .overlay h4,
+body.dark-mode .side-post h4 {
+  color: var(--dk-text);
+}

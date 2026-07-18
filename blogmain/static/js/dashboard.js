@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Simple delete confirmation for all delete links
-    document.querySelectorAll('a[href*="delete"]').forEach(function(link) {
+    document.querySelectorAll('a[data-item-type]').forEach(function(link) {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             

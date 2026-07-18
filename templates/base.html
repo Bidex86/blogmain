@@ -211,10 +211,23 @@
 
             <!-- Middle: Categories (desktop only) -->
             <div class="category-links desktop-only">
-                {% for cat in categories %}
+                {% for cat in nav_categories %}
+                    {% if cat.children.all %}
+                    <div class="nav-dropdown">
+                        <a href="{% url 'posts_by_category' cat.slug %}" class="category-link nav-dropdown-toggle">
+                        {{ cat.category_name }} <span class="caret">&#9662;</span>
+                        </a>
+                        <div class="nav-dropdown-menu">
+                        {% for child in cat.children.all %}
+                            <a href="{% url 'posts_by_category' child.slug %}" class="nav-dropdown-item">{{ child.category_name }}</a>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
                     <a href="{% url 'posts_by_category' cat.slug %}" class="category-link">{{ cat.category_name }}</a>
+                    {% endif %}
                 {% endfor %}
-            </div>
+                </div>
 
             <!-- Right: Auth links (desktop) + Profile + Search + Toggle (mobile) -->
             <div class="navbar-right">
@@ -376,8 +389,17 @@
                 </a>
             {% endif %}
 
-            {% for cat in categories %}
-                <a href="{% url 'posts_by_category' cat.slug %}" class="category-link">{{ cat.category_name }}</a>
+            {% for cat in nav_categories %}
+                {% if cat.children.all %}
+                    <a href="{% url 'posts_by_category' cat.slug %}" class="category-link">{{ cat.category_name }}</a>
+                    <div class="mobile-subcats">
+                    {% for child in cat.children.all %}
+                        <a href="{% url 'posts_by_category' child.slug %}" class="category-link sub">— {{ child.category_name }}</a>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <a href="{% url 'posts_by_category' cat.slug %}" class="category-link">{{ cat.category_name }}</a>
+                {% endif %}
             {% endfor %}
         </div>
     </nav>
@@ -460,7 +482,7 @@
         </div>
 
         <div class="footer-links">
-            <a href="{% url 'page_detail' slug='about-us' %}">About Us</a>
+            <a href="{% url 'page_detail' slug='about' %}">About Us</a>
             <a href="{% url 'page_detail' slug='cookies' %}">Cookies</a>
             <a href="{% url 'page_detail' slug='privacy-policy' %}">Privacy Policy</a>
             <a href="{% url 'page_detail' slug='terms-of-use' %}">Terms of Use</a>

@@ -98,9 +98,9 @@ ROOT_URLCONF = 'blogmain.urls'
 
 # Push Notification Settings
 WEBPUSH_SETTINGS = {
-    'VAPID_PRIVATE_KEY': config('VAPID_PRIVATE_KEY'),
-    'VAPID_PUBLIC_KEY': config('VAPID_PUBLIC_KEY'),
-    'VAPID_ADMIN_EMAIL': config('VAPID_ADMIN_EMAIL')
+    'VAPID_PRIVATE_KEY': os.path.join(BASE_DIR, 'private_key.pem'),  # now a PATH, not the PEM text
+    'VAPID_PUBLIC_KEY': 'BENxrA6o41iDJvSpn4FZ_BaklEMJ0k0KWnFrJij4dAS9NXiqfs_qUJy6CUptsWdTIbUzGyR9eUTi8ggS8ashoeo',
+    'VAPID_ADMIN_EMAIL': 'bidemi02@gmail.com',
 }
 
 # Advertisement Settings
@@ -168,11 +168,17 @@ WSGI_APPLICATION = 'blogmain.wsgi.application'
 
 
 # Database Configuration
+import os
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'CONN_MAX_AGE': 600,  # Keep connections alive for 10 minutes
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+        'CONN_MAX_AGE': 600,
     }
 }
 
@@ -328,6 +334,7 @@ PIPELINE = {
                 'css/analytics-ads.css',
                 'css/notifications.css',  # ADD THIS
                 'css/video.css',
+                'css/dark-theme.css',
             ),
             'output_filename': 'css/main.min.css',
             'extra_context': {
@@ -376,7 +383,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_TEMPLATE_PACK = 'Bootstrap4'
 
 # Django Sites Framework
-SITE_ID = 2
+SITE_ID = 3
 
 # Authentication
 AUTHENTICATION_BACKENDS = (

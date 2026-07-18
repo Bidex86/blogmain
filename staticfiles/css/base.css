@@ -1,4 +1,3 @@
-
 body {
   margin: 0;
   background: #ffffff;
@@ -9,13 +8,14 @@ body {
 }
 
 /* === Navbar Styles === */
-:root {
+:root { --breaking-height: 42px;
   --brand-red: #d32f2f;
   --brand-white: #fff;
   --text-dark: #222;
   --text-muted: #777;
   --light-gray: #f5f5f5;
 }
+html, body { overflow-x: clip; }
 
 .breaking-news {
   background-color: #d40000;
@@ -28,6 +28,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 1050;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .breaking-title {
   background: white;
@@ -47,21 +48,35 @@ body {
   z-index: 999;
 }
 
+/* ============================================ */
+/* NAVBAR LAYOUT (consolidated)                 */
+/* ============================================ */
 .navbar-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
-/* Left: Logo */
-/*.navbar-left .navbar-brand {
-  font-size: 1.9rem;
-  font-weight: bold;
-  color: white;
-  text-decoration: none;
-  margin-left: 1.5rem;
-}*/
+.navbar-left,
+.navbar-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
 
+.navbar-left {
+  justify-content: flex-start;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.navbar-right .search-form {
+  margin-left: 1.5rem;
+}
 .nav-link {
   color: white;
 }
@@ -70,7 +85,6 @@ body {
 .category-links {
   display: flex;
   margin-left: 1.5rem;
-  
 }
 .category-link {
   font-size: 0.9rem;
@@ -82,16 +96,6 @@ body {
 
 .desktop-only {
   display: flex;
-}
-
-/* Right: search + toggle */
-.navbar-right {
-  font-size: 1rem;
-  display: flex;
-  font-weight: bold;
-  align-items: center;
-  margin-left: 13rem;
-  
 }
 
 .search-header h2 {
@@ -128,12 +132,13 @@ body {
     background-color: #ffc107;
     border-color: #ffc107;
 }
-/* ☰ icon */
+
+/* Hamburger toggle (hidden on desktop; shown via the 1024px media query) */
 .navbar-toggle {
   display: none;
   background: none;
   border: none;
-  font-size: 2rem;
+  font-size: 1.6rem;
   cursor: pointer;
 }
 .nav-search-button {
@@ -146,10 +151,11 @@ body {
   cursor: pointer;
 }
 
-/* Show only on small screens */
+/* Mobile-only elements: hidden on desktop, shown under 1024px */
 .mobile-only {
-  display: block;
+  display: none;
 }
+
 /* Top-down Mobile Overlay */
 .navbar-overlay {
   position: absolute;
@@ -186,16 +192,6 @@ body {
   text-decoration: none;
   font-weight: 600;
   border-bottom: 1px solid #eee;
-}
-
-/* Mobile Nav Toggle */
-.navbar-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  cursor: pointer;
-  gap: 10rem;
 }
 
 #navbar-icon {
@@ -345,9 +341,9 @@ body {
 }
 
 
-/* Responsive only on mobile */
-@media (max-width: 768px) {
-  
+/* Responsive only on mobile/tablet */
+@media (max-width: 1024px) {
+
   .desktop-only {
     display: none;
   }
@@ -359,31 +355,12 @@ body {
   .navbar-toggle {
     display: block;
     color: white;
-    
+  }
+
+  .mobile-only {
+    display: block;
   }
 }
-
-
-
-.navbar-container {
-  justify-content: flex-start;
-  
-}
-
-
-.navbar-left,
-.navbar-right {
-  flex: 1;
-}
-
-.navbar-left {
-  justify-content: flex-start;
-}
-
-.navbar-right {
-  justify-content: flex-end;
-}
-
 
 
 /* Pagination */
@@ -435,11 +412,6 @@ color: #727272;
 .light-mode .logout-box {
   --bg-color: #fff;
   --text-color: #212529;
-}
-
-body.dark {
-  background-color: #6e6e6e;
-  --text-color: white;
 }
 
 /* ===================================
@@ -650,3 +622,24 @@ body.dark {
         padding: 3px 6px;
     }
 }
+
+/* === Category dropdown nav === */
+.nav-dropdown { position: relative; display: inline-block; }
+.nav-dropdown-toggle .caret { font-size: 0.7em; margin-left: 3px; }
+.nav-dropdown-menu {
+  position: absolute; top: 100%; left: 0; min-width: 180px;
+  background: #000; border: 1px solid #333; border-top: 3px solid orangered;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  display: none; flex-direction: column; padding: 6px 0; z-index: 1000;
+}
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu { display: flex; }
+.nav-dropdown-item {
+  color: #fff; text-decoration: none; padding: 8px 16px;
+  font-size: 0.9rem; font-weight: 600; white-space: nowrap;
+}
+.nav-dropdown-item:hover { background: orangered; }
+
+/* Mobile sub-categories (inside overlay) */
+.mobile-subcats { display: flex; flex-direction: column; padding-left: 1rem; }
+.mobile-subcats .category-link.sub { font-weight: 500; opacity: 0.85; }

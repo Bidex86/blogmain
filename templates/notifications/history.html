@@ -27,7 +27,7 @@
                                         <p>{{ notification.message }}</p>
                                         <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
                                         {% if notification.url %}
-                                            <a href="{{ notification.url }}" class="btn btn-sm btn-link">View</a>
+                                            <a href="{{ notification.target_url }}" class="btn btn-sm btn-link">View</a>
                                         {% endif %}
                                     </div>
                                 </div>

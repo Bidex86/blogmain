@@ -8,8 +8,18 @@ from django_ckeditor_5.widgets import CKEditor5Widget
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['category_name']
+        fields = ['category_name', 'parent']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        qs = Category.objects.filter(parent__isnull=True).order_by('category_name')
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)          # not its own parent
+            qs = qs.exclude(children__isnull=False)        # don't nest under a category that has kids
+        self.fields['parent'].queryset = qs.distinct()
+        self.fields['parent'].required = False
+        self.fields['parent'].empty_label = "— None (top-level category) —"
+        
 class BlogPostForm(forms.ModelForm):
     class Meta:
         model = Blog

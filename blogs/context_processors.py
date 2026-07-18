@@ -4,7 +4,13 @@ from .models import Category, SiteSetting, SocialLink
 
 def get_categories(request):
     categories = Category.objects.all()
-    return dict(categories=categories)
+    nav_categories = (
+        Category.objects
+        .filter(parent__isnull=True)
+        .prefetch_related('children')
+        .order_by('category_name')
+    )
+    return dict(categories=categories, nav_categories=nav_categories)
 
 
 def get_social_links(request):

@@ -57,7 +57,7 @@ def notification_list(request):
                 'type': n.type,
                 'title': n.title,
                 'message': n.message,
-                'url': n.url,
+                'url': n.blog_post.get_absolute_url() if n.blog_post else n.url,
                 'is_read': n.is_read,
                 'created_at': n.created_at.isoformat(),
             }
@@ -105,7 +105,8 @@ def notification_preferences(request):
 @login_required
 def notification_history(request):
     """View all notifications"""
-    notifications = Notification.objects.filter(user=request.user)
+    notifications = Notification.objects.filter(user=request.user)\
+        .select_related('blog_post__category')
     
     # Pagination
     from django.core.paginator import Paginator
@@ -153,15 +154,15 @@ def send_push_notification(user, title, body, url='/', image=None):
     }
     
     # Load VAPID key from file
-    key_path = os.path.join(settings.BASE_DIR, 'private_key.pem')
-    vapid = Vapid.from_file(key_path)
+    #key_path = os.path.join(settings.BASE_DIR, 'private_key.pem')
+    #vapid = Vapid.from_file(key_path)
     
     for subscription in subscriptions:
         try:
             webpush(
                 subscription_info=subscription.subscription_info,
                 data=json.dumps(payload),
-                vapid_private_key=vapid,
+                vapid_private_key=settings.WEBPUSH_SETTINGS['VAPID_PRIVATE_KEY'],
                 vapid_claims={
                     "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}"
                 }
@@ -169,9 +170,15 @@ def send_push_notification(user, title, body, url='/', image=None):
             print(f"✅ Notification sent to {user.username}")
         except WebPushException as e:
             print(f"❌ Push notification failed for {user.username}: {e}")
-            if e.response and e.response.status_code in [404, 410]:
+
+            # A 404/410 means this subscription is dead — retire it.
+            status = getattr(getattr(e, "response", None), "status_code", None)
+            is_dead = status in (404, 410) or "410" in str(e) or "404" in str(e)
+
+            if is_dead:
                 subscription.is_active = False
-                subscription.save()
+                subscription.save(update_fields=["is_active"])
+                print(f"   ↳ deactivated dead subscription {subscription.id}")
 
 def notify_users_new_post(blog_post):
     """Notify users about a new blog post based on their preferences"""
@@ -211,13 +218,27 @@ def notify_users_new_post(blog_post):
         )
         
         # Send push notification
-        send_push_notification(
-            user=user,
-            title=f"New Post: {blog_post.title}",
-            body=clean_message,  # CHANGED: Use clean_message
-            url=notification.url,
-            image=blog_post.featured_image.url if blog_post.featured_image else None,
-        )
+        #send_push_notification(
+            #user=user,
+            #title=f"New Post: {blog_post.title}",
+            #body=clean_message,  # CHANGED: Use clean_message
+            #url=notification.url,
+            #image=blog_post.featured_image.url if blog_post.featured_image else None,
+        #)
         
-        notification.is_sent = True
-        notification.save()
+        #notification.is_sent = True
+        #notification.save()
+
+        # Send push notification — must never crash the loop or roll back the row
+        try:
+            send_push_notification(
+                user=user,
+                title=f"New Post: {blog_post.title}",
+                body=clean_message,
+                url=notification.url,
+                image=blog_post.featured_image.url if blog_post.featured_image else None,
+            )
+            notification.is_sent = True
+            notification.save()
+        except Exception as e:
+            print(f"⚠️ Push failed for {user} (in-app notification still saved): {e}")

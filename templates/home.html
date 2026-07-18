@@ -54,6 +54,59 @@
 {% endblock %}
 
 {% block content %}
+
+<script>
+  document.querySelectorAll('[data-carousel]').forEach(function (carousel) {
+    const track = carousel.querySelector('.carousel-track');
+    const prev  = carousel.querySelector('.carousel-prev');
+    const next  = carousel.querySelector('.carousel-next');
+    if (!track) return;
+
+    const step = () => Math.max(track.clientWidth * 0.9, 260);
+
+    // --- manual controls (unchanged) ---
+    if (prev) prev.addEventListener('click', () => { stopAuto(); track.scrollBy({ left: -step(), behavior: 'smooth' }); });
+    if (next) next.addEventListener('click', () => { stopAuto(); track.scrollBy({ left:  step(), behavior: 'smooth' }); });
+
+    // --- auto-rotate ---
+    const INTERVAL = 5000;   // ms between advances — tune to taste
+    let timer = null;
+
+    // Respect users who prefer reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    function advance() {
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      if (track.scrollLeft >= maxScroll - 5) {
+        track.scrollTo({ left: 0, behavior: 'smooth' });   // loop back to start
+      } else {
+        track.scrollBy({ left: step(), behavior: 'smooth' });
+      }
+    }
+
+    function startAuto() {
+      if (!timer) timer = setInterval(advance, INTERVAL);
+    }
+    function stopAuto() {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    // Pause while the user is engaged; resume when they leave
+    carousel.addEventListener('mouseenter', stopAuto);
+    carousel.addEventListener('mouseleave', startAuto);
+    carousel.addEventListener('touchstart', stopAuto, { passive: true });
+    carousel.addEventListener('touchend', () => setTimeout(startAuto, 4000), { passive: true });
+
+    // Don't waste cycles when the tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      document.hidden ? stopAuto() : startAuto();
+    });
+
+    startAuto();
+  });
+</script>
+
 <main id="main-content">
   <!-- Error message display -->
   {% if error_message %}
@@ -82,7 +135,7 @@
             <div class="side-post">
               <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read trending article: {{ post.title }}">{{ post.title }}</a></h4>
               <div class="catename">{{ post.category.category_name }}</div>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+              <p>{{ post.short_description|strip_outer_p|safe|truncatewords_html:20 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </div>
           </article>
@@ -110,7 +163,7 @@
               {% seo_responsive_image featured_post alt="Featured image for '{{ featured_post.title }}'" css_class="img-featured-article" context_name="full" %}
               <div class="overlay">
                 <h3>{{ featured_post.title }}</h3>
-                <p>{{ featured_post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+                <p>{{ post.short_description|strip_outer_p|safe|truncatewords_html:20 }}</p>
                 <time class="datetime" datetime="{{ featured_post.created_at|date:'c' }}">{{ featured_post.created_at|date:"M d, Y" }}</time>
                 <div class="readmore">
                   Read More <i class="fas fa-arrow-right"></i>
@@ -141,7 +194,7 @@
             <div class="side-post">
               <h4><a href="{% url 'blogs' category_slug=post.category.slug slug=post.slug %}" aria-label="Read editor's pick: {{ post.title }}">{{ post.title }}</a></h4>
               <div class="catename">{{ post.category.category_name }}</div>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+              <p>{{ post.short_description|strip_outer_p|safe|truncatewords_html:20 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </div>
           </article>
@@ -156,7 +209,9 @@
   <section class="recent-articles" aria-labelledby="recent-articles-heading">
     <h2 id="recent-articles-heading">Recent Articles</h2>
     {% if page_obj %}
-      <div class="grid-4" role="list">
+       <div class="carousel" data-carousel>
+        <button type="button" class="carousel-btn carousel-prev" aria-label="Previous articles">&#10094;</button>
+        <div class="carousel-track" role="list">
         {% for post in page_obj %}
           {% if post.slug %}
             <article class="article-card {% if post.is_video_post %}has-video-badge{% endif %}" role="listitem">
@@ -172,7 +227,7 @@
                 {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-article-card" context_name="post" %}
                 <h3>{{ post.title }}</h3> 
                 <div class="catename">{{ post.category.category_name }}</div>
-                <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
+                <p>{{ post.short_description|strip_outer_p|safe|truncatewords_html:20 }}</p>
                 <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
               </a>
             </article>
@@ -180,6 +235,8 @@
         {% empty %}
           <p>No recent articles available at the moment.</p>
         {% endfor %}
+      </div>
+        <button type="button" class="carousel-btn carousel-next" aria-label="Next articles">&#10095;</button>
       </div>
     {% else %}
       <p>No articles available at the moment.</p>
@@ -241,7 +298,7 @@
                   {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-main" context_name="full" %}
                   <div class="overlay">
                     <h4>{{ post.title }}</h4>
-                    <p>{{ post.short_description|strip_outer_p|safe|truncatewords:20 }}</p>
+                    <p>{{ post.short_description|strip_outer_p|safe|truncatewords_html:20 }}</p>
                     <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
                     <div class="readmore">
                       Read More <i class="fas fa-arrow-right"></i>
@@ -292,7 +349,7 @@
               {% endif %}
               {% seo_responsive_image post alt="Featured image for '{{ post.title }}'" css_class="img-category-grid" context_name="post" %}
               <h5>{{ post.title }}</h5>
-              <p>{{ post.short_description|strip_outer_p|safe|truncatewords:15 }}</p>
+              <p>{{ post.short_description|strip_outer_p|safe|truncatewords_html:15 }}</p>
               <time class="datetime" datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"M d, Y" }}</time>
             </a>
           </article>

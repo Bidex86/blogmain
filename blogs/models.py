@@ -15,9 +15,16 @@ from django.contrib.contenttypes.models import ContentType
 class Category(models.Model):
     category_name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=150, unique=True, blank=True)
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='children',
+    )
     # SEO fields for categories
     meta_title = models.CharField(max_length=60, blank=True, help_text="SEO title (60 chars max)")
-    meta_description = models.TextField(max_length=160, blank=True, help_text="SEO description (160 chars max)")
+    meta_description = models.TextField(max_length=250, blank=True, help_text="SEO description (160 chars max)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -62,7 +69,7 @@ def validate_image_extension(value):
         raise ValidationError('Only .jpg, .jpeg, .png images are allowed')
 
 class Blog(models.Model):
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=250)
     slug = models.SlugField(max_length=150, unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     
@@ -75,9 +82,9 @@ class Blog(models.Model):
     )
     
     # SEO Enhancement Fields
-    meta_title = models.CharField(max_length=60, blank=True, help_text="SEO title (60 chars max)")
+    meta_title = models.CharField(max_length=250, blank=True, help_text="SEO title (250 chars max)")
     meta_description = CKEditor5Field('Description', config_name='default')
-    focus_keyword = models.CharField(max_length=100, blank=True, help_text="Main SEO keyword for this post")
+    focus_keyword = models.CharField(max_length=250, blank=True, help_text="Main SEO keyword for this post")
     seo_keywords = models.CharField(max_length=255, blank=True, help_text="Comma-separated keywords for auto-linking")
     
     author = models.ForeignKey(User, on_delete=models.CASCADE)

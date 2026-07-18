@@ -343,11 +343,11 @@ img {
    RECENT ARTICLES (BBC Grid Style)
 =========================== */
 .recent-articles {
-  margin: 48px 0;
   padding: 32px 16px;
   max-width: 1280px;
   margin: 48px auto;
   border-top: 8px solid #BB1919;
+  background: #ffffff;
 }
 
 .recent-articles h2 {
@@ -389,9 +389,6 @@ img {
   outline-offset: 2px;
 }
 
-.recent-articles{
-   background: #ffffff;
-}
 .recent-articles .grid-4 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -748,17 +745,22 @@ img {
 /* ===========================
    MOBILE LAYOUT (BBC Mobile Style)
 =========================== */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .featured-section,
   .recent-articles,
   .category-block {
     padding: 16px;
   }
-
+@media (min-width: 768px) and (max-width: 1024px) {
+  .featured-layout {
+    grid-template-columns: 1fr 2fr 1fr;   /* keep 3 columns on tablets */
+  }
+}
   .featured-layout {
     grid-template-columns: 1fr;
     gap: 24px;
   }
+  
 
   .sidebar {
     border-left: none;
@@ -1088,4 +1090,46 @@ img {
 
 .grid-3, .grid-4, .recent-articles .grid-4 {
   border: none !important;
+}
+
+/* === Recent Articles carousel === */
+.carousel { position: relative; }
+
+.carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 4px 4px 1rem;          /* keeps card shadows/focus rings from clipping */
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* old Edge */
+}
+.carousel-track::-webkit-scrollbar { display: none; }   /* Chrome/Safari */
+
+.carousel-track .article-card {
+  flex: 0 0 280px;                /* card width; how many show adapts to screen */
+  scroll-snap-align: start;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 38%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 44px; height: 44px;
+  border: none; border-radius: 50%;
+  background: rgba(0,0,0,0.65);
+  color: #fff; font-size: 1.2rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.carousel-btn:hover { background: #BB1919; }
+.carousel-prev { left: -6px; }
+.carousel-next { right: -6px; }
+
+/* On phones, hide arrows and let users swipe */
+@media (max-width: 768px) {
+  .carousel-btn { display: none; }
 }
