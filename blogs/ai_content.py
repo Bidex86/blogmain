@@ -7,7 +7,7 @@ from textstat import flesch_reading_ease, flesch_kincaid_grade
 from collections import Counter
 from django.utils.html import strip_tags
 from django.conf import settings
-import openai
+#import openai
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 import numpy as np

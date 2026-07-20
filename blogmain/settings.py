@@ -30,7 +30,17 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='127.0.0.1,localhost',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
+)
 
 
 # Application definition
@@ -99,8 +109,8 @@ ROOT_URLCONF = 'blogmain.urls'
 # Push Notification Settings
 WEBPUSH_SETTINGS = {
     'VAPID_PRIVATE_KEY': os.path.join(BASE_DIR, 'private_key.pem'),  # now a PATH, not the PEM text
-    'VAPID_PUBLIC_KEY': 'BENxrA6o41iDJvSpn4FZ_BaklEMJ0k0KWnFrJij4dAS9NXiqfs_qUJy6CUptsWdTIbUzGyR9eUTi8ggS8ashoeo',
-    'VAPID_ADMIN_EMAIL': 'bidemi02@gmail.com',
+    'VAPID_PUBLIC_KEY': config('VAPID_PUBLIC_KEY', default=''),
+    'VAPID_ADMIN_EMAIL': config('VAPID_ADMIN_EMAIL', default='admin@example.com'),
 }
 
 # Advertisement Settings
@@ -431,11 +441,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # For production - uncomment and configure these:
 """
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'bidemia02@gmail.com'
-EMAIL_HOST_PASSWORD = 'baci akdd twoo yqmr'  # Use app password, not your regular password
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.com')
 """
 
 DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
@@ -493,9 +504,9 @@ BLOG_SETTINGS = {
 
 # PWA Configuration
 PWA_CONFIG = {
-    'name': 'Advanced Blog PWA',
-    'short_name': 'BlogPWA',
-    'description': 'Advanced blogging platform with AI features',
+    'name': config('SITE_NAME', default='Advanced Blog PWA'),
+    'short_name': config('SITE_NAME', default='BlogPWA'),
+    'description': config('SITE_DESCRIPTION', default='Advanced blogging platform with AI features'),
     'theme_color': '#000000',
     'background_color': '#ffffff',
     'display': 'standalone',

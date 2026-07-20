@@ -57,7 +57,7 @@ def send_new_post_email(sender, instance, created, raw=False, **kwargs):
         # 2) Email newsletter, isolated.
         try:
             subject = f"New post: {instance.title}"
-            from_email = 'bidemia02@gmail.com'
+            from_email = settings.DEFAULT_FROM_EMAIL
             recipient_list = [u.email for u in User.objects.filter(profile__newsletter_opt_in=True)]
 
             html_content = render_to_string('emails/add_post.html', {'post': instance, 'request': None})

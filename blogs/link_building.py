@@ -8,7 +8,6 @@ from django.urls import reverse
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
 import nltk
-from textrank4zh import TextRank4Sentence
 from django.contrib.contenttypes.models import ContentType
 from .models import LinkOpportunity, BrokenLink, LinkPerformance  # Import from models
 
@@ -56,29 +55,45 @@ class AILinkBuilder:
         return opportunities[:10]  # Return top 10 opportunities
     
     def _extract_key_phrases(self, content):
-        """Extract key phrases using TextRank algorithm"""
+        """Extract key phrases via frequency-scored sentence ranking (English-appropriate)."""
         try:
-            tr4s = TextRank4Sentence()
-            tr4s.analyze(content, lower=True, source='all_filters')
-            
-            # Get key sentences and extract phrases
-            key_sentences = tr4s.get_key_sentences(num=5)
-            
+            text = strip_tags(content)
+
+            # Split into sentences
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if len(s.split()) >= 4]
+            if not sentences:
+                return self._simple_phrase_extraction(content)
+
+            # Score words by frequency (ignoring stop words / short words)
+            words = re.findall(r'[a-zA-Z]{4,}', text.lower())
+            word_freq = Counter(w for w in words if w not in self.stop_words)
+            if not word_freq:
+                return self._simple_phrase_extraction(content)
+            max_freq = max(word_freq.values())
+
+            # Score each sentence by its words' normalized frequencies
+            def sentence_score(sentence):
+                s_words = re.findall(r'[a-zA-Z]{4,}', sentence.lower())
+                if not s_words:
+                    return 0
+                return sum(word_freq.get(w, 0) / max_freq for w in s_words) / len(s_words)
+
+            key_sentences = sorted(sentences, key=sentence_score, reverse=True)[:5]
+
+            # Same bigram phrase extraction as before, on the top sentences
             phrases = []
             for sentence in key_sentences:
-                # Extract noun phrases (simplified)
-                words = sentence.sentence.split()
-                for i in range(len(words) - 1):
-                    if len(words[i]) > 3 and len(words[i+1]) > 3:
-                        phrase = f"{words[i]} {words[i+1]}"
+                s_words = sentence.split()
+                for i in range(len(s_words) - 1):
+                    if len(s_words[i]) > 3 and len(s_words[i + 1]) > 3:
+                        phrase = f"{s_words[i]} {s_words[i + 1]}"
                         if phrase.lower() not in self.stop_words:
                             phrases.append(phrase)
-            
+
             return list(set(phrases))[:20]
-        except:
-            # Fallback to simple extraction
+        except Exception:
             return self._simple_phrase_extraction(content)
-    
+            
     def _simple_phrase_extraction(self, content):
         """Simple phrase extraction as fallback"""
         sentences = content.split('.')
