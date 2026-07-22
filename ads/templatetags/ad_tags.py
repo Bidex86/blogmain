@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from ads.models import Advertisement, AdPosition
 import random
+from django.template.loader import render_to_string
 
 register = template.Library()
 
@@ -110,3 +111,60 @@ def ad_styles():
 def get_ad_positions():
     """Get all available ad positions"""
     return AdPosition.objects.filter(is_active=True)
+
+@register.simple_tag(takes_context=True)
+def inject_ad_into_content(context, content, position_slug='in-content', after_paragraph=3):
+    """Insert an ad into post HTML after the Nth </p>. Falls back to untouched content."""
+    request = context.get('request')
+    if not content or not request:
+        return mark_safe(content or '')
+
+    try:
+        position = AdPosition.objects.get(slug=position_slug, is_active=True)
+        ads = Advertisement.objects.filter(
+            position=position, is_active=True,
+            start_date__lte=timezone.now(),
+        ).exclude(end_date__lt=timezone.now()).order_by('-priority', '?')
+        ad = ads.first()
+        if not ad:
+            return mark_safe(content)
+
+        ad_html = render_to_string('ads/ad_display.html', {'ad': ad, 'request': request})
+
+        parts = content.split('</p>')
+        # Only inject if the post is long enough to sandwich the ad in text
+        if len(parts) > after_paragraph + 1:
+            parts[after_paragraph - 1] += '</p>' + ad_html
+            rebuilt = '</p>'.join(
+                p for i, p in enumerate(parts)
+                if not (i == after_paragraph - 1 and False)
+            )
+            # simpler correct rebuild:
+            head = '</p>'.join(parts[:after_paragraph]) + '</p>'
+            tail = '</p>'.join(parts[after_paragraph:])
+            return mark_safe(head + ad_html + tail)
+        return mark_safe(content)
+    except AdPosition.DoesNotExist:
+        return mark_safe(content)
+    except Exception:
+        return mark_safe(content)
+    
+@register.filter
+def para_head(content, n=3):
+    """First n paragraphs of HTML content (split at </p> — never mid-tag)."""
+    if not content:
+        return ''
+    parts = content.split('</p>')
+    if len(parts) <= n + 1:
+        return mark_safe(content)          # short post: whole thing is the head
+    return mark_safe('</p>'.join(parts[:n]) + '</p>')
+
+@register.filter
+def para_tail(content, n=3):
+    """Everything after the first n paragraphs; empty for short posts."""
+    if not content:
+        return ''
+    parts = content.split('</p>')
+    if len(parts) <= n + 1:
+        return ''                          # short post: tail is empty, head had it all
+    return mark_safe('</p>'.join(parts[n:]))

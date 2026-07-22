@@ -164,7 +164,7 @@
               {% with content=auto.content|strip_outer_p %}
                   {% if content|length > 800 %}
                       <!-- First part of content -->
-                      {{ content|slice:":800"|safe }}
+                     {{ content|para_head:3 }} 
                       
                       <!-- Inline Related Posts (properly styled) -->
                       {% if auto.related_links %}
@@ -186,7 +186,7 @@
                       </div>
                       
                       <!-- Rest of content -->
-                      {{ content|slice:"800:"|safe }}
+                      {{ content|para_tail:3 }} 
                   {% else %}
                       <!-- For shorter content -->
                       {{ content|safe }}

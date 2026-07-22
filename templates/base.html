@@ -1,6 +1,4 @@
 {% load static %}
-{% load pipeline %}
-{% stylesheet 'main' %}
 {% load ad_tags %}
 
 <!DOCTYPE html>
@@ -89,9 +87,9 @@
   {% endcomment %}
 
   <!-- Pipeline CSS -->
-  {% load static %}
   {% load pipeline %}
   {% stylesheet 'main' %}
+  {% ad_styles %}
   
 
   <!-- Enhanced Meta Tags with AI Content (only if content analysis exists) -->

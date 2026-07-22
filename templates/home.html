@@ -5,6 +5,7 @@
 {% stylesheet 'main' %}
 {% javascript 'main' %}
 {% load custom_filters %}
+{% load ad_tags %}      ← add this
 
 {% block head %}
 <!-- SEO Meta Tags -->
@@ -203,7 +204,9 @@
         {% endfor %}
       </aside>
     </div>
-  </section> 
+  </section>
+  
+  {% show_ad 'in-content' %}
 
   <!-- Recent Articles Section -->
   <section class="recent-articles" aria-labelledby="recent-articles-heading">

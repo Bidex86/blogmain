@@ -7,7 +7,7 @@ Usage: {% include 'video_player.html' with post=single_blog %}
 {% load static %}
 {% load pipeline %}
 {% stylesheet 'main' %}
-
+{% load ad_tags %}      ← add this
 {% if post.is_video_post %}
 <!-- Video Content Badge -->
 <div class="content-type-badge video-badge">
