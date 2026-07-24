@@ -83,6 +83,8 @@
     <small id="login-help" class="sr-only">Click to sign in to your account</small>
   </form>
 
+  {% get_providers as socialaccount_providers %}
+  {% if socialaccount_providers %}
   <hr class="divider" role="separator" aria-label="Or sign in with social media">
 
   <h2 class="alt-login-title">Sign in with</h2>
@@ -128,10 +130,13 @@
   <p class="register-link">
     Don't have an account? <a href="{% url 'account_signup' %}">Create one here</a>
   </p>
+  {% endif %}
   
+  {% if socialaccount_providers %}
   <div class="social-note">
     <small>New users signing up with social media will be automatically subscribed to our newsletter. You can unsubscribe anytime from your account settings.</small>
   </div>
+  {% endif %}
 </div>
 
 <!-- Screen reader only content for accessibility -->

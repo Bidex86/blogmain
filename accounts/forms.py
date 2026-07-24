@@ -3,6 +3,7 @@ from allauth.account.forms import SignupForm, LoginForm
 from django import forms
 from .models import Profile
 
+
 class ProfileForm(forms.ModelForm):  # Changed from forms.Form to forms.ModelForm
     class Meta:
         model = Profile
@@ -70,3 +71,4 @@ class NewsletterOptInForm(forms.Form):
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+

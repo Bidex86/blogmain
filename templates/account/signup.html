@@ -92,6 +92,8 @@
         <small id="signup-help" class="sr-only">Click to create your new account</small>
     </form>
 
+    {% get_providers as socialaccount_providers %}
+    {% if socialaccount_providers %}
     <hr class="divider" role="separator" aria-label="Or sign up with social media">
 
     <h2 class="alt-login-title">Sign up with</h2>
@@ -137,6 +139,7 @@
            Continue with Facebook
         </a>
     </div>
+    {% endif %}
     
     <p class="register-link">
        Already have an account? <a href="{% url 'account_login' %}">Sign in here</a>

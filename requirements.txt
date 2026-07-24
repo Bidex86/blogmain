@@ -27,6 +27,7 @@ moviepy==2.2.1
 # ---- Push notifications ----
 pywebpush==2.1.0
 py-vapid==1.9.2
+cryptography==42.0.8
 
 # ---- Content analysis / SEO (local, no external API) ----
 nltk==3.9.1
